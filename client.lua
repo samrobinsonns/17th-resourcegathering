@@ -5,6 +5,11 @@ local zoneProps = {} -- Tracks props per merged zone
 local activeZones = {} -- Tracks active sphere zones
 local defaultMergeRadius = 200.0
 
+-- UI Target Variables
+local uiTargetPed = nil
+local uiTargetBlip = nil
+local uiOpen = false
+
 local function HasRequiredTool(activity)
     local ped = PlayerPedId()
     local tool = nil
@@ -737,5 +742,216 @@ CreateThread(function()
     while true do
         Wait(5000) -- Update every 5 seconds
         UpdatePlayerDataInUI()
+    end
+end)
+
+-- UI Target Functions
+local function CreateUITarget()
+    if not Config.UITarget.enabled then return end
+    
+    -- Create the ped
+    local pedModel = GetHashKey(Config.UITarget.ped.model)
+    RequestModel(pedModel)
+    while not HasModelLoaded(pedModel) do Wait(10) end
+    
+    uiTargetPed = CreatePed(4, pedModel, Config.UITarget.ped.coords.x, Config.UITarget.ped.coords.y, Config.UITarget.ped.coords.z - 1.0, Config.UITarget.ped.heading, false, true)
+    SetEntityHeading(uiTargetPed, Config.UITarget.ped.heading)
+    FreezeEntityPosition(uiTargetPed, true)
+    SetEntityInvincible(uiTargetPed, true)
+    SetBlockingOfNonTemporaryEvents(uiTargetPed, true)
+    
+    -- Set ped scenario
+    if Config.UITarget.ped.scenario then
+        TaskStartScenarioInPlace(uiTargetPed, Config.UITarget.ped.scenario, 0, true)
+    end
+    
+    -- Create blip if enabled
+    if Config.UITarget.ped.blip.enabled then
+        uiTargetBlip = AddBlipForCoord(Config.UITarget.ped.coords.x, Config.UITarget.ped.coords.y, Config.UITarget.ped.coords.z)
+        SetBlipSprite(uiTargetBlip, Config.UITarget.ped.blip.sprite)
+        SetBlipDisplay(uiTargetBlip, 4)
+        SetBlipScale(uiTargetBlip, Config.UITarget.ped.blip.scale)
+        SetBlipColour(uiTargetBlip, Config.UITarget.ped.blip.color)
+        SetBlipAsShortRange(uiTargetBlip, true)
+        BeginTextCommandSetBlipName("STRING")
+        AddTextComponentSubstringPlayerName(Config.UITarget.ped.blip.label)
+        EndTextCommandSetBlipName(uiTargetBlip)
+    end
+    
+    -- Add target interaction based on config
+    if Config.UITarget.targetSystem == 'ox_target' then
+        -- ox_target system
+        exports['ox_target']:addLocalEntity(uiTargetPed, {
+            {
+                name = 'mining_ui_target',
+                icon = 'fas fa-mountain',
+                label = 'Access Mining Operations',
+                distance = Config.UITarget.distance,
+                onSelect = function()
+                    OpenMiningUI()
+                end
+            }
+        })
+    elseif Config.UITarget.targetSystem == 'qb-target' then
+        -- qb-target system
+        exports['qb-target']:AddTargetEntity(uiTargetPed, {
+            options = {
+                {
+                    type = "client",
+                    event = "mining:openUI",
+                    icon = "fas fa-mountain",
+                    label = "Access Mining Operations",
+                    distance = Config.UITarget.distance
+                }
+            }
+        })
+    end
+    
+    print('Mining UI Target created at:', Config.UITarget.ped.coords)
+end
+
+local function DeleteUITarget()
+    if uiTargetPed and DoesEntityExist(uiTargetPed) then
+        DeleteEntity(uiTargetPed)
+        uiTargetPed = nil
+    end
+    
+    if uiTargetBlip and DoesBlipExist(uiTargetBlip) then
+        RemoveBlip(uiTargetBlip)
+        uiTargetBlip = nil
+    end
+end
+
+-- Function to open mining UI
+function OpenMiningUI()
+    if uiOpen then return end
+    
+    uiOpen = true
+    SetNuiFocus(true, true)
+    SendNUIMessage({
+        type = 'showUI'
+    })
+    
+    -- Get player data and update UI
+    UpdatePlayerDataInUI()
+end
+
+-- Function to close mining UI
+function CloseMiningUI()
+    if not uiOpen then return end
+    
+    uiOpen = false
+    SetNuiFocus(false, false)
+    SendNUIMessage({
+        type = 'hideUI'
+    })
+end
+
+-- NUI Callbacks
+RegisterNUICallback('closeUI', function(data, cb)
+    CloseMiningUI()
+    cb('ok')
+end)
+
+-- NUI Callback for purchasing equipment
+RegisterNUICallback('purchaseEquipment', function(data, cb)
+    local toolType = data.toolType
+    local playerLevel = data.playerLevel
+    
+    -- Check if player meets level requirement
+    local requiredLevel = 0
+    if toolType == 'pickaxe' then
+        requiredLevel = 0
+    elseif toolType == 'drill' then
+        requiredLevel = 21
+    elseif toolType == 'laser' then
+        requiredLevel = 51
+    end
+    
+    if playerLevel < requiredLevel then
+        cb({ success = false, message = 'Level ' .. requiredLevel .. ' required for ' .. toolType })
+        return
+    end
+    
+    -- Check if player already has the tool
+    if HasMiningTool(toolType) then
+        cb({ success = false, message = 'You already own this tool' })
+        return
+    end
+    
+    -- Give the tool to player
+    local success = GiveMiningTool(toolType)
+    if success then
+        cb({ success = true, message = 'Tool purchased successfully!' })
+        -- Update UI to reflect new ownership
+        SendNUIMessage({
+            type = 'updateEquipment',
+            toolType = toolType,
+            owned = true
+        })
+    else
+        cb({ success = false, message = 'Failed to give tool. Inventory might be full.' })
+    end
+end)
+
+-- qb-target event handler
+RegisterNetEvent('mining:openUI', function()
+    OpenMiningUI()
+end)
+
+-- Function to give item to player based on inventory system
+local function GiveMiningTool(toolType)
+    local itemConfig = Config.Inventory.items[toolType]
+    if not itemConfig then return false end
+    
+    if Config.Inventory.system == 'ox_inventory' then
+        -- ox_inventory system
+        local success = exports.ox_inventory:AddItem(itemConfig.name, 1, {
+            durability = 100,
+            level = 1,
+            bonus = 0
+        })
+        return success
+    elseif Config.Inventory.system == 'qb-inventory' then
+        -- qb-inventory system
+        local success = exports['qb-inventory']:AddItem(itemConfig.name, 1, false, {
+            durability = 100,
+            level = 1,
+            bonus = 0
+        })
+        return success
+    end
+    
+    return false
+end
+
+-- Function to check if player has item
+local function HasMiningTool(toolType)
+    local itemConfig = Config.Inventory.items[toolType]
+    if not itemConfig then return false end
+    
+    if Config.Inventory.system == 'ox_inventory' then
+        -- ox_inventory system
+        local count = exports.ox_inventory:GetItemCount(itemConfig.name)
+        return count > 0
+    elseif Config.Inventory.system == 'qb-inventory' then
+        -- qb-inventory system
+        local hasItem = QBCore.Functions.HasItem(itemConfig.name)
+        return hasItem
+    end
+    
+    return false
+end
+
+-- Create UI target when resource starts
+CreateThread(function()
+    Wait(1000) -- Wait for everything to load
+    CreateUITarget()
+end)
+
+-- Cleanup when resource stops
+AddEventHandler('onResourceStop', function(resourceName)
+    if GetCurrentResourceName() == resourceName then
+        DeleteUITarget()
     end
 end) 

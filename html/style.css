@@ -606,6 +606,18 @@ body {
     opacity: 0.6;
 }
 
+/* Equipment owned state */
+.btn-primary.owned {
+    background: var(--success-color);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.btn-primary.owned:hover {
+    background: var(--success-color);
+    transform: none;
+}
+
 /* Leaderboard */
 .leaderboard-header {
     text-align: center;

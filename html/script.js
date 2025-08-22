@@ -226,15 +226,32 @@ class ResourceGatheringUI {
             this.equipment[equipmentType].level = 1;
             this.updateEquipmentDisplay();
         } else {
-            // In FiveM, trigger server event
-            fetch(`https://${GetParentResourceName()}/getEquipment`, {
+            // In FiveM, purchase equipment through NUI callback
+            fetch(`https://${GetParentResourceName()}/purchaseEquipment`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    equipment: equipmentType
+                    toolType: equipmentType,
+                    playerLevel: this.playerData.level
                 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.showNotification(data.message, 'success');
+                    // Update equipment ownership
+                    this.equipment[equipmentType].unlocked = true;
+                    this.equipment[equipmentType].level = 1;
+                    this.updateEquipmentDisplay();
+                } else {
+                    this.showNotification(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error purchasing equipment:', error);
+                this.showNotification('Failed to purchase equipment', 'error');
             });
         }
     }
@@ -317,6 +334,9 @@ class ResourceGatheringUI {
             drill: { unlocked: false, level: 0 },
             laser: { unlocked: false, level: 0 }
         };
+        
+        // Mock inventory check for test mode
+        this.checkInventoryStatus();
         
         // Mock leaderboard data
         this.leaderboardData = [
@@ -493,11 +513,75 @@ class ResourceGatheringUI {
             body: JSON.stringify(data)
         });
     }
+
+    // Handle NUI messages from FiveM client
+    handleNUIMessage(message) {
+        switch (message.type) {
+            case 'showUI':
+                this.showUI();
+                break;
+            case 'hideUI':
+                this.hideUI();
+                break;
+            case 'updatePlayerData':
+                if (message.playerData) {
+                    this.playerData = message.playerData;
+                    this.updatePlayerStats();
+                }
+                break;
+            case 'updateEquipment':
+                this.updateEquipmentOwnership(message.toolType, message.owned);
+                break;
+        }
+    }
+
+    showUI() {
+        const ipadFrame = document.getElementById('ipadFrame');
+        if (ipadFrame) {
+            ipadFrame.style.display = 'block';
+        }
+    }
+
+    hideUI() {
+        const ipadFrame = document.getElementById('ipadFrame');
+        if (ipadFrame) {
+            ipadFrame.style.display = 'none';
+        }
+    }
+
+    // Update equipment ownership status
+    updateEquipmentOwnership(toolType, owned) {
+        if (this.equipment[toolType]) {
+            this.equipment[toolType].unlocked = owned;
+            this.equipment[toolType].level = owned ? 1 : 0;
+            this.updateEquipmentDisplay();
+        }
+    }
+
+    // Check inventory status for equipment
+    checkInventoryStatus() {
+        if (this.testMode) {
+            // In test mode, simulate inventory check
+            console.log('🧪 Test Mode: Checking inventory status for equipment');
+            return;
+        }
+        
+        // In FiveM, check actual inventory for equipment
+        // This would be called when the UI opens to sync with actual inventory
+        console.log('Checking actual inventory for mining equipment...');
+    }
 }
 
 // Initialize UI when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.miningUI = new ResourceGatheringUI();
+});
+
+// Listen for NUI messages from FiveM client
+window.addEventListener('message', (event) => {
+    if (window.miningUI) {
+        window.miningUI.handleNUIMessage(event.data);
+    }
 });
 
 // Add CSS animation for notifications

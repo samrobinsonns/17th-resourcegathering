@@ -1,6 +1,50 @@
 Config = {}
 
-Config.SkillSettings = {
+-- UI Target Configuration
+Config.UITarget = {
+    enabled = true,
+    targetSystem = 'ox_target', -- Options: 'ox_target' or 'qb-target'
+    ped = {
+        model = 's_m_m_trucker_01', -- Mining foreman ped
+        coords = vector3(2955.04, 2795.18, 40.89), -- Same as main mining zone
+        heading = 180.0,
+        scenario = 'WORLD_HUMAN_CLIPBOARD', -- Makes ped look like they're working
+        blip = {
+            enabled = true,
+            sprite = 618, -- Mining icon
+            color = 5, -- Yellow
+            scale = 0.8,
+            label = 'Mining Operations'
+        }
+    },
+    distance = 3.0, -- Distance player needs to be to interact
+    key = 'E' -- Key to open UI
+}
+
+-- Inventory System Configuration
+Config.Inventory = {
+    system = 'ox_inventory', -- Options: 'ox_inventory' or 'qb-inventory'
+    items = {
+        pickaxe = {
+            name = 'mining_pickaxe',
+            label = 'Mining Pickaxe',
+            weight = 1000,
+            description = 'A sturdy pickaxe for mining operations'
+        },
+        drill = {
+            name = 'mining_drill',
+            label = 'Mining Drill',
+            weight = 2000,
+            description = 'An advanced drilling tool for mining'
+        },
+        laser = {
+            name = 'mining_laser',
+            label = 'Mining Laser',
+            weight = 1500,
+            description = 'A precision laser tool for mining'
+        }
+    }
+}
     tiers = {
         { level = 0, name = "Beginner", chance_boost = 1.0, amount_multiplier = 1.0 },
         { level = 21, name = "Intermediate", chance_boost = 1.2, amount_multiplier = 1.5 },
@@ -387,6 +431,28 @@ Config.Items = {
         stack = true,
         close = true,
         description = 'Refined gold'
+    },
+    -- Mining Equipment Items
+    mining_pickaxe = {
+        label = 'Mining Pickaxe',
+        weight = 1000,
+        stack = false,
+        close = true,
+        description = 'A sturdy pickaxe for mining operations'
+    },
+    mining_drill = {
+        label = 'Mining Drill',
+        weight = 2000,
+        stack = false,
+        close = true,
+        description = 'An advanced drilling tool for mining'
+    },
+    mining_laser = {
+        label = 'Mining Laser',
+        weight = 1500,
+        stack = false,
+        close = true,
+        description = 'A precision laser tool for mining'
     }
 }
 

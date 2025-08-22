@@ -291,6 +291,15 @@ class ResourceGatheringUI {
                     { name: 'IronMaster', level: 28, totalMined: 398 },
                     { name: 'CoalCollector', level: 25, totalMined: 312 }
                 ];
+            } else {
+                // Request leaderboard from server
+                fetch(`https://${GetParentResourceName()}/getLeaderboard`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ period: period })
+                });
             }
 
             this.displayLeaderboard();
@@ -571,6 +580,12 @@ class ResourceGatheringUI {
                 break;
             case 'updateEquipment':
                 this.updateEquipmentOwnership(message.toolType, message.owned);
+                break;
+            case 'updateLeaderboard':
+                if (message.leaderboardData) {
+                    this.leaderboardData = message.leaderboardData;
+                    this.displayLeaderboard();
+                }
                 break;
         }
     }

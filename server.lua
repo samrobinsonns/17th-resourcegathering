@@ -1,6 +1,46 @@
 local QBCore = exports['17th-base']:GetCoreObject()
 local inventory = exports['17th-inventory']
 
+-- Database Functions for Mining System
+local function GetMiningPlayerData(citizenId)
+    local result = MySQL.query.await('SELECT * FROM mining_players WHERE citizen_id = ?', {citizenId})
+    if result and result[1] then
+        return result[1]
+    end
+    return nil
+end
+
+local function CreateMiningPlayer(citizenId)
+    local success = MySQL.insert.await('INSERT INTO mining_players (citizen_id, mining_xp, mining_level, total_mined) VALUES (?, 0, 1, 0)', {citizenId})
+    if success then
+        return {
+            citizen_id = citizenId,
+            mining_xp = 0,
+            mining_level = 1,
+            total_mined = 0
+        }
+    end
+    return nil
+end
+
+local function UpdateMiningPlayerData(citizenId, miningXP, miningLevel, totalMined)
+    local success = MySQL.update.await('UPDATE mining_players SET mining_xp = ?, mining_level = ?, total_mined = ?, last_mined = CURRENT_TIMESTAMP WHERE citizen_id = ?', 
+        {miningXP, miningLevel, totalMined, citizenId})
+    return success
+end
+
+local function AddMiningHistory(citizenId, toolUsed, xpGained, itemsFound)
+    local itemsJson = json.encode(itemsFound or {})
+    local success = MySQL.insert.await('INSERT INTO mining_history (citizen_id, tool_used, xp_gained, items_found) VALUES (?, ?, ?, ?)', 
+        {citizenId, toolUsed, xpGained, itemsJson})
+    return success
+end
+
+local function GetMiningLeaderboard(limit)
+    local result = MySQL.query.await('SELECT * FROM mining_leaderboard LIMIT ?', {limit or 10})
+    return result or {}
+end
+
 -- XP System Functions
 local function CalculateLevelXP(level)
     if level <= 1 then return 0 end
@@ -175,17 +215,28 @@ RegisterNetEvent('resource:recycle', function(itemName, amount, risky)
 end)
 
 -- Mining XP Event
-RegisterNetEvent('mining:addXP', function(amount, toolType)
+RegisterNetEvent('mining:addXP', function(amount, toolType, itemsFound)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
     if not Player then return end
     
     if not Config.XPSystem.enabled then return end
     
-    -- Get current mining XP from player metadata
-    local currentMiningXP = Player.PlayerData.metadata.mining_xp or 0
-    local currentMiningLevel = Player.PlayerData.metadata.mining_level or 1
-    local totalMined = Player.PlayerData.metadata.total_mined or 0
+    local citizenId = Player.PlayerData.citizenid
+    
+    -- Get or create mining player data from database
+    local miningData = GetMiningPlayerData(citizenId)
+    if not miningData then
+        miningData = CreateMiningPlayer(citizenId)
+        if not miningData then
+            print('Failed to create mining player data for: ' .. citizenId)
+            return
+        end
+    end
+    
+    local currentMiningXP = miningData.mining_xp
+    local currentMiningLevel = miningData.mining_level
+    local totalMined = miningData.total_mined
     
     -- Calculate base XP
     local baseXP = Config.XPSystem.rewards.mining or 20
@@ -201,11 +252,17 @@ RegisterNetEvent('mining:addXP', function(amount, toolType)
     -- Update XP and level
     local newXP = currentMiningXP + finalXP
     local newLevel, actualXP = GetLevelFromXP(newXP)
+    local newTotalMined = totalMined + 1
     
-    -- Update player metadata
-    Player.Functions.SetMetaData('mining_xp', actualXP)
-    Player.Functions.SetMetaData('mining_level', newLevel)
-    Player.Functions.SetMetaData('total_mined', totalMined + 1)
+    -- Update database
+    local updateSuccess = UpdateMiningPlayerData(citizenId, actualXP, newLevel, newTotalMined)
+    if not updateSuccess then
+        print('Failed to update mining data for: ' .. citizenId)
+        return
+    end
+    
+    -- Add mining history
+    AddMiningHistory(citizenId, toolType, finalXP, itemsFound)
     
     -- Notify player of XP gain
     if newLevel > currentMiningLevel then
@@ -218,7 +275,7 @@ RegisterNetEvent('mining:addXP', function(amount, toolType)
     local playerData = {
         level = newLevel,
         xp = actualXP,
-        totalMined = totalMined + 1,
+        totalMined = newTotalMined,
         xpForNextLevel = GetXPForNextLevel(newLevel),
         xpProgress = GetXPProgress(newLevel, actualXP)
     }
@@ -232,17 +289,57 @@ RegisterNetEvent('mining:getPlayerData', function()
     local Player = QBCore.Functions.GetPlayer(src)
     if not Player then return end
     
-    local currentMiningXP = Player.PlayerData.metadata.mining_xp or 0
-    local currentMiningLevel = Player.PlayerData.metadata.mining_level or 1
-    local totalMined = Player.PlayerData.metadata.total_mined or 0
+    local citizenId = Player.PlayerData.citizenid
+    
+    -- Get mining player data from database
+    local miningData = GetMiningPlayerData(citizenId)
+    if not miningData then
+        -- Create new mining player if they don't exist
+        miningData = CreateMiningPlayer(citizenId)
+        if not miningData then
+            print('Failed to create mining player data for: ' .. citizenId)
+            return
+        end
+    end
     
     local playerData = {
-        level = currentMiningLevel,
-        xp = currentMiningXP,
-        totalMined = totalMined,
-        xpForNextLevel = GetXPForNextLevel(currentMiningLevel),
-        xpProgress = GetXPProgress(currentMiningLevel, currentMiningXP)
+        level = miningData.mining_level,
+        xp = miningData.mining_xp,
+        totalMined = miningData.total_mined,
+        xpForNextLevel = GetXPForNextLevel(miningData.mining_level),
+        xpProgress = GetXPProgress(miningData.mining_level, miningData.mining_xp)
     }
     
     TriggerClientEvent('mining:updatePlayerData', src, playerData)
+end)
+
+-- Get Mining Leaderboard Event
+RegisterNetEvent('mining:getLeaderboard', function()
+    local src = source
+    local Player = QBCore.Functions.GetPlayer(src)
+    if not Player then return end
+    
+    -- Get top 10 miners from database
+    local leaderboardData = GetMiningLeaderboard(10)
+    
+    -- Format leaderboard data for client
+    local formattedLeaderboard = {}
+    for i, player in ipairs(leaderboardData) do
+        -- Get player name from QBCore if available
+        local playerName = "Unknown Player"
+        local qbPlayer = QBCore.Functions.GetPlayerByCitizenId(player.citizen_id)
+        if qbPlayer then
+            playerName = qbPlayer.PlayerData.charinfo.firstname .. " " .. qbPlayer.PlayerData.charinfo.lastname
+        end
+        
+        table.insert(formattedLeaderboard, {
+            rank = i,
+            name = playerName,
+            level = player.mining_level,
+            totalMined = player.total_mined,
+            xp = player.mining_xp
+        })
+    end
+    
+    TriggerClientEvent('mining:updateLeaderboard', src, formattedLeaderboard)
 end)

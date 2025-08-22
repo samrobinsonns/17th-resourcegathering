@@ -910,6 +910,12 @@ RegisterNUICallback('purchaseEquipment', function(data, cb)
     end
 end)
 
+-- NUI Callback for getting leaderboard
+RegisterNUICallback('getLeaderboard', function(data, cb)
+    TriggerServerEvent('mining:getLeaderboard')
+    cb('ok')
+end)
+
 -- qb-target event handler
 RegisterNetEvent('mining:openUI', function()
     OpenMiningUI()
@@ -918,6 +924,14 @@ end)
 -- Mining XP Update Event
 RegisterNetEvent('mining:updatePlayerData', function(playerData)
     SendPlayerDataToUI(playerData)
+end)
+
+-- Mining Leaderboard Update Event
+RegisterNetEvent('mining:updateLeaderboard', function(leaderboardData)
+    SendNUIMessage({
+        type = 'updateLeaderboard',
+        leaderboardData = leaderboardData
+    })
 end)
 
 -- Function to give item to player based on inventory system

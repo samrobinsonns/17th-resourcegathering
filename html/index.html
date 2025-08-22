@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mining Operations - Sergei's Company</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- iPad Device Frame -->
+    <div class="ipad-frame" id="ipadFrame">
+        <div class="ipad-screen">
+            <!-- Main UI Container -->
+            <div class="ui-container" id="uiContainer">
+                <!-- Top Bar -->
+                <div class="top-bar">
+                    <div class="top-bar-left">
+                        <i class="fas fa-mountain company-icon"></i>
+                        <h1 class="company-name">Mining Co.</h1>
+                    </div>
+                    <div class="top-bar-center">
+                        <div class="player-stats">
+                            <div class="stat-item">
+                                <i class="fas fa-mountain"></i>
+                                <span id="totalMined">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-star"></i>
+                                <span id="miningLevel">Level 1</span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-coins"></i>
+                                <span id="playerXP">0 XP</span>
+                            </div>
+                        </div>
+                        <div class="xp-bar">
+                            <div class="xp-progress" id="xpProgress"></div>
+                        </div>
+                    </div>
+                    <div class="top-bar-right">
+                        <button class="close-btn" id="closeBtn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Main Layout -->
+                <div class="main-layout">
+                    <!-- Sidebar -->
+                    <div class="sidebar">
+                        <div class="sidebar-header">
+                            <h3>Mining Hub</h3>
+                        </div>
+                        <div class="sidebar-nav">
+                            <button class="nav-item active" data-tab="dashboard">
+                                <i class="fas fa-chart-line"></i>
+                                Dashboard
+                            </button>
+                            <button class="nav-item" data-tab="equipment">
+                                <i class="fas fa-tools"></i>
+                                Equipment
+                            </button>
+                            <button class="nav-item" data-tab="leaderboard">
+                                <i class="fas fa-trophy"></i>
+                                Leaderboard
+                            </button>
+                        </div>
+                        <div class="sidebar-footer">
+                            <div class="user-info">
+                                <i class="fas fa-user-circle"></i>
+                                <div class="user-details">
+                                    <div class="user-rank" id="userRank">Miner</div>
+                                    <div class="user-status" id="userStatus">Active</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Content Area -->
+                    <div class="content-area">
+                        <!-- Dashboard Tab -->
+                        <div class="tab-pane active" id="dashboard">
+                            <div class="dashboard-hero">
+                                <div class="hero-stat">
+                                    <div class="hero-icon success">
+                                        <i class="fas fa-mountain"></i>
+                                    </div>
+                                    <div class="hero-content">
+                                        <div class="hero-value" id="totalMinedValue">0</div>
+                                        <div class="hero-label">Total Mined</div>
+                                        <div class="hero-trend success">
+                                            <i class="fas fa-arrow-up"></i>
+                                            <span>Mining Progress</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="hero-stat">
+                                    <div class="hero-icon info">
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                    <div class="hero-content">
+                                        <div class="hero-value" id="skillLevel">1</div>
+                                        <div class="hero-label">Mining Level</div>
+                                        <div class="hero-trend success">
+                                            <i class="fas fa-arrow-up"></i>
+                                            <span>Next: Expert</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="xp-progress-section">
+                                <h3><i class="fas fa-chart-line"></i> Experience Progress</h3>
+                                <div class="xp-bar-container">
+                                    <div class="xp-bar">
+                                        <div class="xp-fill" id="xpFill"></div>
+                                    </div>
+                                    <div class="xp-text">
+                                        <span id="currentXP">0</span> / <span id="nextLevelXP">100</span> XP to next level
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Equipment Tab -->
+                        <div class="tab-pane" id="equipment">
+                            <div class="equipment-header">
+                                <h2>Mining Equipment</h2>
+                                <p>Upgrade your tools to mine more efficiently</p>
+                            </div>
+
+                            <div class="equipment-grid">
+                                <div class="equipment-item" id="pickaxe-item">
+                                    <div class="equipment-icon">
+                                        <i class="fas fa-hammer"></i>
+                                    </div>
+                                    <div class="equipment-details">
+                                        <h3>Pickaxe</h3>
+                                        <p class="equipment-description">Basic mining tool for beginners</p>
+                                        <div class="equipment-requirements">
+                                            <span class="requirement">Level Required: 1</span>
+                                        </div>
+                                        <div class="equipment-status" id="pickaxe-status">
+                                            <span class="status-available">Available</span>
+                                        </div>
+                                    </div>
+                                    <div class="equipment-actions">
+                                        <button class="btn btn-primary" id="pickaxe-btn">Get Pickaxe</button>
+                                    </div>
+                                </div>
+
+                                <div class="equipment-item" id="drill-item">
+                                    <div class="equipment-icon">
+                                        <i class="fas fa-drill"></i>
+                                    </div>
+                                    <div class="equipment-details">
+                                        <h3>Mining Drill</h3>
+                                        <p class="equipment-description">Advanced drilling equipment for intermediate miners</p>
+                                        <div class="equipment-requirements">
+                                            <span class="requirement">Level Required: 25</span>
+                                        </div>
+                                        <div class="equipment-status" id="drill-status">
+                                            <span class="status-locked">Locked</span>
+                                        </div>
+                                    </div>
+                                    <div class="equipment-actions">
+                                        <button class="btn btn-secondary" id="drill-btn" disabled>Level 25 Required</button>
+                                    </div>
+                                </div>
+
+                                <div class="equipment-item" id="laser-item">
+                                    <div class="equipment-icon">
+                                        <i class="fas fa-laser-pointer"></i>
+                                    </div>
+                                    <div class="equipment-details">
+                                        <h3>Mining Laser</h3>
+                                        <p class="equipment-description">High-tech laser mining for expert miners</p>
+                                        <div class="equipment-requirements">
+                                            <span class="requirement">Level Required: 50</span>
+                                        </div>
+                                        <div class="equipment-status" id="laser-status">
+                                            <span class="status-locked">Locked</span>
+                                        </div>
+                                    </div>
+                                    <div class="equipment-actions">
+                                        <button class="btn btn-secondary" id="laser-btn" disabled>Level 50 Required</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Leaderboard Tab -->
+                        <div class="tab-pane" id="leaderboard">
+                            <div class="leaderboard-header">
+                                <h2>Mining Leaderboard</h2>
+                                <p>Top miners in the company</p>
+                            </div>
+
+                            <div class="leaderboard-filters">
+                                <select id="leaderboardPeriod">
+                                    <option value="weekly">This Week</option>
+                                    <option value="monthly">This Month</option>
+                                    <option value="alltime">All Time</option>
+                                </select>
+                            </div>
+
+                            <div class="leaderboard-list" id="leaderboardList">
+                                <div class="leaderboard-item">
+                                    <div class="rank">1</div>
+                                    <div class="player-info">
+                                        <div class="player-name">Loading...</div>
+                                        <div class="player-level">Level 0</div>
+                                    </div>
+                                    <div class="player-stats">
+                                        <div class="total-mined">0 Mined</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Loading...</p>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+</body>
+</html>

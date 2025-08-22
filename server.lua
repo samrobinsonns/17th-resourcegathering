@@ -1,6 +1,51 @@
 local QBCore = exports['17th-base']:GetCoreObject()
 local inventory = exports['17th-inventory']
 
+-- XP System Functions
+local function CalculateLevelXP(level)
+    if level <= 1 then return 0 end
+    
+    local totalXP = 0
+    for i = 2, level do
+        totalXP = totalXP + (Config.XPSystem.xpPerLevel * math.pow(Config.XPSystem.xpMultiplier, i - 2))
+    end
+    return math.floor(totalXP)
+end
+
+local function GetLevelFromXP(xp)
+    if xp <= 0 then return 1 end
+    
+    local level = 1
+    local currentXP = 0
+    
+    while level < Config.XPSystem.maxLevel do
+        local nextLevelXP = CalculateLevelXP(level + 1)
+        if xp >= nextLevelXP then
+            level = level + 1
+            currentXP = xp
+        else
+            break
+        end
+    end
+    
+    return level, currentXP
+end
+
+local function GetXPForNextLevel(currentLevel)
+    if currentLevel >= Config.XPSystem.maxLevel then return 0 end
+    return CalculateLevelXP(currentLevel + 1)
+end
+
+local function GetXPProgress(currentLevel, currentXP)
+    local levelStartXP = CalculateLevelXP(currentLevel)
+    local levelEndXP = CalculateLevelXP(currentLevel + 1)
+    local xpInLevel = currentXP - levelStartXP
+    local xpNeeded = levelEndXP - levelStartXP
+    
+    if xpNeeded <= 0 then return 100 end
+    return math.min(100, (xpInLevel / xpNeeded) * 100)
+end
+
 -- Function to get the player's skill tier
 local function GetSkillTier(skillLevel)
     for _, tier in ipairs(Config.SkillSettings.tiers) do
@@ -127,4 +172,77 @@ RegisterNetEvent('resource:recycle', function(itemName, amount, risky)
         exports['17th-inventory']:AddItem(src, itemName, amount)
         TriggerClientEvent('Base17th:Notify', src, 'Materials', 'Your inventory is full! Items refunded.', 'error')
     end
+end)
+
+-- Mining XP Event
+RegisterNetEvent('mining:addXP', function(amount, toolType)
+    local src = source
+    local Player = QBCore.Functions.GetPlayer(src)
+    if not Player then return end
+    
+    if not Config.XPSystem.enabled then return end
+    
+    -- Get current mining XP from player metadata
+    local currentMiningXP = Player.PlayerData.metadata.mining_xp or 0
+    local currentMiningLevel = Player.PlayerData.metadata.mining_level or 1
+    local totalMined = Player.PlayerData.metadata.total_mined or 0
+    
+    -- Calculate base XP
+    local baseXP = Config.XPSystem.rewards.mining or 20
+    
+    -- Add tool bonus XP
+    if toolType then
+        baseXP = baseXP + Config.XPSystem.rewards.mining_bonus
+    end
+    
+    -- Add amount bonus
+    local finalXP = baseXP + (amount or 0)
+    
+    -- Update XP and level
+    local newXP = currentMiningXP + finalXP
+    local newLevel, actualXP = GetLevelFromXP(newXP)
+    
+    -- Update player metadata
+    Player.Functions.SetMetaData('mining_xp', actualXP)
+    Player.Functions.SetMetaData('mining_level', newLevel)
+    Player.Functions.SetMetaData('total_mined', totalMined + 1)
+    
+    -- Notify player of XP gain
+    if newLevel > currentMiningLevel then
+        TriggerClientEvent('Base17th:Notify', src, 'Mining', 'Level Up! You are now level ' .. newLevel .. '!', 'success')
+    else
+        TriggerClientEvent('Base17th:Notify', src, 'Mining', 'You gained ' .. finalXP .. ' mining XP!', 'success')
+    end
+    
+    -- Send updated data to client
+    local playerData = {
+        level = newLevel,
+        xp = actualXP,
+        totalMined = totalMined + 1,
+        xpForNextLevel = GetXPForNextLevel(newLevel),
+        xpProgress = GetXPProgress(newLevel, actualXP)
+    }
+    
+    TriggerClientEvent('mining:updatePlayerData', src, playerData)
+end)
+
+-- Get Player Data Event
+RegisterNetEvent('mining:getPlayerData', function()
+    local src = source
+    local Player = QBCore.Functions.GetPlayer(src)
+    if not Player then return end
+    
+    local currentMiningXP = Player.PlayerData.metadata.mining_xp or 0
+    local currentMiningLevel = Player.PlayerData.metadata.mining_level or 1
+    local totalMined = Player.PlayerData.metadata.total_mined or 0
+    
+    local playerData = {
+        level = currentMiningLevel,
+        xp = currentMiningXP,
+        totalMined = totalMined,
+        xpForNextLevel = GetXPForNextLevel(currentMiningLevel),
+        xpProgress = GetXPProgress(currentMiningLevel, currentMiningXP)
+    }
+    
+    TriggerClientEvent('mining:updatePlayerData', src, playerData)
 end)

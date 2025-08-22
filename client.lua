@@ -847,6 +847,22 @@ function CloseMiningUI()
     })
 end
 
+-- Function to update player data in UI
+function UpdatePlayerDataInUI()
+    if not uiOpen then return end
+    
+    -- Get player data from server
+    TriggerServerEvent('mining:getPlayerData')
+end
+
+-- Function to send player data to UI
+function SendPlayerDataToUI(playerData)
+    SendNUIMessage({
+        type = 'updatePlayerData',
+        playerData = playerData
+    })
+end
+
 -- NUI Callbacks
 RegisterNUICallback('closeUI', function(data, cb)
     CloseMiningUI()
@@ -899,6 +915,11 @@ RegisterNetEvent('mining:openUI', function()
     OpenMiningUI()
 end)
 
+-- Mining XP Update Event
+RegisterNetEvent('mining:updatePlayerData', function(playerData)
+    SendPlayerDataToUI(playerData)
+end)
+
 -- Function to give item to player based on inventory system
 local function GiveMiningTool(toolType)
     local itemConfig = Config.Inventory.items[toolType]
@@ -941,6 +962,51 @@ local function HasMiningTool(toolType)
     end
     
     return false
+end
+
+-- XP System Functions
+local function CalculateLevelXP(level)
+    if level <= 1 then return 0 end
+    
+    local totalXP = 0
+    for i = 2, level do
+        totalXP = totalXP + (Config.XPSystem.xpPerLevel * math.pow(Config.XPSystem.xpMultiplier, i - 2))
+    end
+    return math.floor(totalXP)
+end
+
+local function GetLevelFromXP(xp)
+    if xp <= 0 then return 1 end
+    
+    local level = 1
+    local currentXP = 0
+    
+    while level < Config.XPSystem.maxLevel do
+        local nextLevelXP = CalculateLevelXP(level + 1)
+        if xp >= nextLevelXP then
+            level = level + 1
+            currentXP = xp
+        else
+            break
+        end
+    end
+    
+    return level, currentXP
+end
+
+local function GetXPForNextLevel(currentLevel)
+    if currentLevel >= Config.XPSystem.maxLevel then return 0 end
+    return CalculateLevelXP(currentLevel + 1)
+end
+
+local function GetXPProgress(currentLevel, currentXP)
+    local levelStartXP = CalculateLevelXP(currentLevel)
+    local levelEndXP = CalculateLevelXP(currentLevel + 1)
+    local xpInLevel = currentXP - levelStartXP
+    local xpNeeded = levelEndXP - levelStartXP
+    
+    if xpNeeded <= 0 then return 100 end
+    return math.min(100, (xpInLevel / xpNeeded) * 100)
 end
 
 -- Create UI target when resource starts

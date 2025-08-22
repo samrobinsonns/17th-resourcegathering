@@ -145,36 +145,60 @@ class ResourceGatheringUI {
             const currentXP = this.playerData.xp;
             const currentLevel = this.playerData.level;
             
-            // Calculate XP for current level and next level
-            const currentLevelXP = this.getLevelXP(currentLevel);
-            const nextLevelXP = this.getLevelXP(currentLevel + 1);
-            
-            // Calculate progress
-            const xpInCurrentLevel = currentXP - currentLevelXP;
-            const xpNeededForNextLevel = nextLevelXP - currentLevelXP;
-            const progressPercentage = (xpInCurrentLevel / xpNeededForNextLevel) * 100;
-            
-            // Update XP bar
-            const xpFill = document.getElementById('xpFill');
-            if (xpFill) {
-                xpFill.style.width = Math.min(100, Math.max(0, progressPercentage)) + '%';
-            }
+            // Use server-calculated XP progress if available
+            if (this.playerData.xpProgress !== undefined) {
+                const progressPercentage = this.playerData.xpProgress;
+                
+                // Update XP bar
+                const xpFill = document.getElementById('xpFill');
+                if (xpFill) {
+                    xpFill.style.width = Math.min(100, Math.max(0, progressPercentage)) + '%';
+                }
 
-            // Update XP progress bar in top bar
-            const xpProgress = document.getElementById('xpProgress');
-            if (xpProgress) {
-                xpProgress.style.width = Math.min(100, Math.max(0, progressPercentage)) + '%';
+                // Update XP progress bar in top bar
+                const xpProgress = document.getElementById('xpProgress');
+                if (xpProgress) {
+                    xpProgress.style.width = Math.min(100, Math.max(0, progressPercentage)) + '%';
+                }
+            } else {
+                // Fallback to client-side calculation
+                const currentLevelXP = this.getLevelXP(currentLevel);
+                const nextLevelXP = this.getLevelXP(currentLevel + 1);
+                
+                // Calculate progress
+                const xpInCurrentLevel = currentXP - currentLevelXP;
+                const xpNeededForNextLevel = nextLevelXP - currentLevelXP;
+                const progressPercentage = (xpInCurrentLevel / xpNeededForNextLevel) * 100;
+                
+                // Update XP bar
+                const xpFill = document.getElementById('xpFill');
+                if (xpFill) {
+                    xpFill.style.width = Math.min(100, Math.max(0, progressPercentage)) + '%';
+                }
+
+                // Update XP progress bar in top bar
+                const xpProgress = document.getElementById('xpProgress');
+                if (xpProgress) {
+                    xpProgress.style.width = Math.min(100, Math.max(0, progressPercentage)) + '%';
+                }
             }
             
             // Update XP text
             const currentXPElement = document.getElementById('currentXP');
             if (currentXPElement) {
-                currentXPElement.textContent = xpInCurrentLevel;
+                const xpInCurrentLevel = currentXP - this.getLevelXP(currentLevel);
+                currentXPElement.textContent = Math.max(0, xpInCurrentLevel);
             }
             
             const nextLevelXPElement = document.getElementById('nextLevelXP');
             if (nextLevelXPElement) {
-                nextLevelXPElement.textContent = xpNeededForNextLevel;
+                if (this.playerData.xpForNextLevel !== undefined) {
+                    nextLevelXPElement.textContent = this.playerData.xpForNextLevel;
+                } else {
+                    const nextLevelXP = this.getLevelXP(currentLevel + 1);
+                    const currentLevelXP = this.getLevelXP(currentLevel);
+                    nextLevelXPElement.textContent = nextLevelXP - currentLevelXP;
+                }
             }
         } catch (error) {
             console.error('Error updating XP progress:', error);
@@ -325,7 +349,9 @@ class ResourceGatheringUI {
         this.playerData = {
             level: 25,
             xp: 3450,
-            totalMined: 156
+            totalMined: 156,
+            xpForNextLevel: 120,
+            xpProgress: 75.5
         };
         
         // Mock equipment data
@@ -405,6 +431,12 @@ class ResourceGatheringUI {
                     <strong>Mining Test Mode Active</strong><br>
                     Test mining operations and equipment
                 </div>
+                
+                <div style="margin-top: 15px;">
+                    <button id="testMining" style="padding: 8px 12px; background: #27ae60; border: none; border-radius: 4px; color: white; cursor: pointer; width: 100%;">
+                        <i class="fas fa-mountain"></i> Simulate Mining
+                    </button>
+                </div>
             </div>
         `;
         
@@ -466,6 +498,14 @@ class ResourceGatheringUI {
                 const isCollapsed = controlsContent.style.display === 'none';
                 controlsContent.style.display = isCollapsed ? 'block' : 'none';
                 collapseBtn.innerHTML = isCollapsed ? '<i class="fas fa-chevron-up"></i>' : '<i class="fas fa-chevron-down"></i>';
+            });
+        }
+        
+        // Test mining button
+        const testMiningBtn = document.getElementById('testMining');
+        if (testMiningBtn) {
+            testMiningBtn.addEventListener('click', () => {
+                this.simulateMining();
             });
         }
     }
@@ -569,6 +609,40 @@ class ResourceGatheringUI {
         // In FiveM, check actual inventory for equipment
         // This would be called when the UI opens to sync with actual inventory
         console.log('Checking actual inventory for mining equipment...');
+    }
+
+    // Simulate mining operation for testing
+    simulateMining() {
+        if (!this.testMode) return;
+        
+        // Simulate XP gain
+        const baseXP = 20;
+        const bonusXP = Math.floor(Math.random() * 10); // Random bonus 0-9
+        const totalXP = baseXP + bonusXP;
+        
+        // Update player data
+        this.playerData.xp += totalXP;
+        this.playerData.totalMined += 1;
+        
+        // Check for level up
+        const oldLevel = this.playerData.level;
+        this.playerData.level = Math.floor(this.playerData.xp / 100) + 1; // Simple level calculation for test
+        
+        // Update XP progress
+        this.playerData.xpProgress = (this.playerData.xp % 100) / 100 * 100;
+        this.playerData.xpForNextLevel = 100 - (this.playerData.xp % 100);
+        
+        // Update UI
+        this.updatePlayerStats();
+        
+        // Show notification
+        if (this.playerData.level > oldLevel) {
+            this.showNotification(`Level Up! You are now level ${this.playerData.level}!`, 'success');
+        } else {
+            this.showNotification(`You gained ${totalXP} mining XP!`, 'success');
+        }
+        
+        console.log(`🧪 Test Mining: +${totalXP} XP, Total: ${this.playerData.xp}, Level: ${this.playerData.level}`);
     }
 }
 

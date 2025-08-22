@@ -45,6 +45,34 @@ Config.Inventory = {
         }
     }
 }
+
+-- XP System Configuration
+Config.XPSystem = {
+    enabled = true,
+    -- XP required for each level (level 1 = 0 XP, level 2 = 100 XP, etc.)
+    xpPerLevel = 100, -- Base XP per level
+    xpMultiplier = 1.2, -- XP requirement multiplier per level
+    maxLevel = 100, -- Maximum level cap
+    
+    -- XP rewards for different activities
+    rewards = {
+        mining = 20, -- Base XP for mining
+        mining_bonus = 5, -- Bonus XP for using better tools
+        recycling = 25, -- XP for recycling materials
+    },
+    
+    -- Level-based bonuses
+    levelBonuses = {
+        -- Mining efficiency increases with level
+        mining_efficiency = 0.02, -- 2% increase per level
+        -- Better tool unlock levels
+        tool_unlocks = {
+            pickaxe = 0,
+            drill = 21,
+            laser = 51
+        }
+    }
+}
     tiers = {
         { level = 0, name = "Beginner", chance_boost = 1.0, amount_multiplier = 1.0 },
         { level = 21, name = "Intermediate", chance_boost = 1.2, amount_multiplier = 1.5 },

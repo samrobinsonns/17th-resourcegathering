@@ -186,11 +186,10 @@ html/
 
 ## Dependencies
 
-- **17th-base**: Core framework
-- **ox_lib**: Utility library
-- **17th-skills**: Skills system (optional)
-- **17th-inventory**: Inventory management
-- **17th-minigames**: Minigame system
+- **qb-core**: Core framework
+- **ox_lib**: UI library
+- **ox_target**: Target system
+- **ox_inventory**: Inventory management
 
 ## Support
 

@@ -1,13 +1,40 @@
 Config = {}
 
+-- Log Buyer Configuration
+Config.LogBuyer = {
+    enabled = true,
+    ped = {
+        model = 's_m_m_trucker_01', -- Log buyer ped
+        coords = vector4(-568.6981, 5272.9673, 70.2486, 130.7221), -- Location with heading
+        scenario = 'WORLD_HUMAN_CLIPBOARD', -- Makes ped look like they're working
+        blip = {
+            enabled = true,
+            sprite = 569, -- Tree icon
+            color = 25, -- Brown
+            scale = 0.8,
+            label = 'Log Buyer'
+        }
+    },
+    distance = 3.0, -- Distance player needs to be to interact
+    items = {
+        wood_log = {
+            price = 150, -- Price per log
+            label = 'Wood Log'
+        }
+    },
+    payment = {
+        method = 'both', -- Options: 'cash', 'bank', 'both'
+        default = 'cash' -- Default payment method when 'both' is selected
+    }
+}
+
 -- UI Target Configuration
 Config.UITarget = {
     enabled = true,
     targetSystem = 'ox_target', -- Options: 'ox_target' or 'qb-target'
     ped = {
         model = 's_m_m_trucker_01', -- Mining foreman ped
-        coords = vector3(2955.04, 2795.18, 40.89), -- Same as main mining zone
-        heading = 180.0,
+        coords = vector4(2944.2012, 2746.4907, 43.3682, 281.6006), -- New location with heading
         scenario = 'WORLD_HUMAN_CLIPBOARD', -- Makes ped look like they're working
         blip = {
             enabled = true,
@@ -26,39 +53,118 @@ Config.Inventory = {
     system = 'ox_inventory', -- Options: 'ox_inventory' or 'qb-inventory'
     items = {
         pickaxe = {
-            name = 'mining_pickaxe',
+            name = 'pickaxe',
             label = 'Mining Pickaxe',
             weight = 1000,
             description = 'A sturdy pickaxe for mining operations'
         },
-        drill = {
+        mining_drill = {
             name = 'mining_drill',
             label = 'Mining Drill',
             weight = 2000,
             description = 'An advanced drilling tool for mining'
         },
-        laser = {
+        mining_laser = {
             name = 'mining_laser',
             label = 'Mining Laser',
             weight = 1500,
             description = 'A precision laser tool for mining'
+        },
+        hatchet = {
+            name = 'hatchet',
+            label = 'Hatchet',
+            weight = 800,
+            description = 'A sharp hatchet for chopping wood'
+        },
+        weapon_hatchet = {
+            name = 'weapon_hatchet',
+            label = 'Hatchet Weapon',
+            weight = 800,
+            description = 'A weaponized hatchet for chopping wood'
         }
     }
 }
 
 -- XP System Configuration
+-- This section controls all XP-related settings for mining and smelting
+-- To change XP rewards, modify the values below:
+--   - mining: XP gained per mining operation
+--   - smelting: XP gained per smelting operation
+--   - mining_bonus: Additional XP for using better tools
 Config.XPSystem = {
     enabled = true,
-    -- XP required for each level (level 1 = 0 XP, level 2 = 100 XP, etc.)
-    xpPerLevel = 100, -- Base XP per level
-    xpMultiplier = 1.2, -- XP requirement multiplier per level
-    maxLevel = 100, -- Maximum level cap
+    -- Individual XP requirements for each level (level 1 = 0 XP, level 2 = 100 XP, etc.)
+    -- You can customize each level's difficulty individually
+    levelRequirements = {
+        -- Level 1-10: Easy progression for beginners
+        [1] = 0,      -- Level 1 starts at 0 XP
+        [2] = 100,    -- Level 2 requires 100 XP
+        [3] = 250,    -- Level 3 requires 250 XP
+        [4] = 450,    -- Level 4 requires 450 XP
+        [5] = 700,    -- Level 5 requires 700 XP
+        [6] = 1000,   -- Level 6 requires 1000 XP
+        [7] = 1350,   -- Level 7 requires 1350 XP
+        [8] = 1750,   -- Level 8 requires 1750 XP
+        [9] = 2200,   -- Level 9 requires 2200 XP
+        [10] = 2700,  -- Level 10 requires 2700 XP
+        
+        -- Level 11-20: Moderate progression
+        [11] = 3250,  -- Level 11 requires 3250 XP
+        [12] = 3850,  -- Level 12 requires 3850 XP
+        [13] = 4500,  -- Level 13 requires 4500 XP
+        [14] = 5200,  -- Level 14 requires 5200 XP
+        [15] = 5950,  -- Level 15 requires 5950 XP
+        [16] = 6750,  -- Level 16 requires 6750 XP
+        [17] = 7600,  -- Level 17 requires 7600 XP
+        [18] = 8500,  -- Level 18 requires 8500 XP
+        [19] = 9450,  -- Level 19 requires 9450 XP
+        [20] = 10450, -- Level 20 requires 10450 XP
+        
+        -- Level 21-30: Challenging progression
+        [21] = 11500, -- Level 21 requires 11500 XP
+        [22] = 12600, -- Level 22 requires 12600 XP
+        [23] = 13750, -- Level 23 requires 13750 XP
+        [24] = 14950, -- Level 24 requires 14950 XP
+        [25] = 16200, -- Level 25 requires 16200 XP
+        [26] = 17500, -- Level 26 requires 17500 XP
+        [27] = 18850, -- Level 27 requires 18850 XP
+        [28] = 20250, -- Level 28 requires 20250 XP
+        [29] = 21700, -- Level 29 requires 21700 XP
+        [30] = 23200, -- Level 30 requires 23200 XP
+        
+        -- Level 31-40: Expert progression
+        [31] = 24750, -- Level 31 requires 24750 XP
+        [32] = 26350, -- Level 32 requires 26350 XP
+        [33] = 28000, -- Level 33 requires 28000 XP
+        [34] = 29700, -- Level 34 requires 29700 XP
+        [35] = 31450, -- Level 35 requires 31450 XP
+        [36] = 33250, -- Level 36 requires 33250 XP
+        [37] = 35100, -- Level 37 requires 35100 XP
+        [38] = 37000, -- Level 38 requires 37000 XP
+        [39] = 38950, -- Level 39 requires 38950 XP
+        [40] = 40950, -- Level 40 requires 40950 XP
+        
+        -- Level 41-51: Master progression
+        [41] = 43000, -- Level 41 requires 43000 XP
+        [42] = 45100, -- Level 42 requires 45100 XP
+        [43] = 47250, -- Level 43 requires 47250 XP
+        [44] = 49450, -- Level 44 requires 49450 XP
+        [45] = 51700, -- Level 45 requires 51700 XP
+        [46] = 54000, -- Level 46 requires 54000 XP
+        [47] = 56350, -- Level 47 requires 56350 XP
+        [48] = 58750, -- Level 48 requires 58750 XP
+        [49] = 61200, -- Level 49 requires 61200 XP
+        [50] = 63700, -- Level 50 requires 63700 XP
+        [51] = 66250, -- Level 51 requires 66250 XP
+    },
+    maxLevel = 51, -- Maximum level cap (matches the array)
     
     -- XP rewards for different activities
     rewards = {
         mining = 20, -- Base XP for mining
         mining_bonus = 5, -- Bonus XP for using better tools
-        recycling = 25, -- XP for recycling materials
+        smelting = 10, -- XP for smelting materials
+        -- Note: These are now the primary XP values used by the system
     },
     
     -- Level-based bonuses
@@ -68,11 +174,13 @@ Config.XPSystem = {
         -- Better tool unlock levels
         tool_unlocks = {
             pickaxe = 0,
-            drill = 21,
-            laser = 51
+            drill = 2,
+            laser = 2
         }
     }
 }
+
+Config.SkillSettings = {
     tiers = {
         { level = 0, name = "Beginner", chance_boost = 1.0, amount_multiplier = 1.0 },
         { level = 21, name = "Intermediate", chance_boost = 1.2, amount_multiplier = 1.5 },
@@ -82,9 +190,9 @@ Config.XPSystem = {
         foraging = 10,
         cement = 10,
         logging = 15,
-        mining = 20,
+        mining = 20, -- This should match Config.XPSystem.rewards.mining
         scavenging = 15,
-        recycling = 25,
+        smelting = 30, -- This should match Config.XPSystem.rewards.smelting
         advanced_scavenging = 20
     },
     recycling_risk_reduction = {
@@ -100,7 +208,7 @@ Config.Cooldowns = {
     logging = 1,
     mining = 1,
     scavenging = 1,
-    recycling = 5,
+    smelting = 5,
     advanced_scavenging = 3
 }
 
@@ -155,6 +263,13 @@ Config.Zones = {
             },
             items = {
                 {name = 'red_mushroom', chance = 30, amount = {min = 1, max = 4}} -- 1,1 → 2,2
+            },
+            blip = {
+                enabled = true,
+                sprite = 496, -- Plant icon
+                color = 2, -- Green
+                scale = 0.7,
+                label = 'Foraging Area'
             }
         },
     },
@@ -187,6 +302,13 @@ Config.Zones = {
             },
             items = {
                 {name = 'wood_log', chance = 100, amount = {min = 2, max = 4}} -- 1,2 → 2,4
+            },
+            blip = {
+                enabled = true,
+                sprite = 569, -- Tree icon
+                color = 25, -- Brown
+                scale = 0.7,
+                label = 'Logging Area'
             }
         },
     },
@@ -259,7 +381,79 @@ Config.Zones = {
 }
 
 Config.RecyclingCenter = {
-    coords = vector3(720.73, 1291.61, 360.3),
+    coords = vector3(1110.6523, -2008.3479, 31.8346),
+    inputs = {
+        copper_ore = true,
+        iron_ore = true,
+        gold_ore = true,
+    },
+    outputs = {
+        copper_ore = {
+            item = 'copper',
+            label = 'Copper',
+            ratio = 0.5
+        },
+        iron_ore = {
+            item = 'iron',
+            label = 'Iron',
+            ratio = 0.5
+        },
+        gold_ore = {
+            item = 'gold',
+            label = 'Gold',
+            ratio = 0.33
+        },
+    },
+    blip = {
+        enabled = true,
+        sprite = 436, -- Furnace icon
+        color = 1, -- Red
+        scale = 0.8,
+        label = 'Smelting Center'
+    },
+    -- New simplified smelting system
+    smelting = {
+        enabled = true,
+        baseDuration = 10000, -- Base duration in milliseconds (10 seconds)
+        levelSpeedBonus = 0.02, -- 2% faster per level (more gradual progression)
+        maxSpeedBonus = 0.92, -- Maximum 92% speed bonus (at level 46)
+        minDuration = 800, -- Minimum duration (0.8 seconds)
+        maxDuration = 15000, -- Maximum duration (15 seconds)
+        -- Level-based duration multipliers for 50 levels
+        levelMultipliers = {
+            -- Early levels (1-10): Slow progression, harder to advance
+            [1] = 1.0,   -- Level 1: 100% (10.0 seconds)
+            [2] = 0.98,  -- Level 2: 98% (9.8 seconds)
+            [3] = 0.96,  -- Level 3: 96% (9.6 seconds)
+            [4] = 0.94,  -- Level 4: 94% (9.4 seconds)
+            [5] = 0.92,  -- Level 5: 92% (9.2 seconds)
+            [6] = 0.90,  -- Level 6: 90% (9.0 seconds)
+            [7] = 0.88,  -- Level 7: 88% (8.8 seconds)
+            [8] = 0.86,  -- Level 8: 86% (8.6 seconds)
+            [9] = 0.84,  -- Level 9: 84% (8.4 seconds)
+            [10] = 0.82, -- Level 10: 82% (8.2 seconds)
+            
+            -- Mid levels (11-25): Steady progression
+            [15] = 0.75, -- Level 15: 75% (7.5 seconds)
+            [20] = 0.65, -- Level 20: 65% (6.5 seconds)
+            [25] = 0.55, -- Level 25: 55% (5.5 seconds)
+            
+            -- High levels (26-40): Faster progression
+            [30] = 0.40, -- Level 30: 40% (4.0 seconds)
+            [35] = 0.25, -- Level 35: 25% (2.5 seconds)
+            [40] = 0.15, -- Level 40: 15% (1.5 seconds)
+            
+            -- Elite levels (41-50): Maximum speed
+            [45] = 0.10, -- Level 45: 10% (1.0 seconds)
+            [50] = 0.08, -- Level 50: 8% (0.8 seconds)
+        }
+    }
+}
+
+-- Additional smelting center location (no blip)
+Config.SmeltingCenter2 = {
+    coords = vector3(1103.5281, -2013.7279, 30.8835),
+    heading = 344.1929,
     inputs = {
         copper_ore = true,
         iron_ore = true,
@@ -484,6 +678,29 @@ Config.Items = {
     }
 }
 
+-- Equipment Shop Configuration
+Config.EquipmentShop = {
+    enabled = true,
+    payment = {
+        method = 'both', -- Options: 'cash', 'bank', 'both'
+        default = 'bank' -- Default payment method when 'both' is selected
+    },
+    items = {
+        pickaxe = {
+            price = 500,
+            label = 'Mining Pickaxe'
+        },
+        mining_drill = {
+            price = 1500,
+            label = 'Mining Drill'
+        },
+        mining_laser = {
+            price = 2500,
+            label = 'Mining Laser'
+        }
+    }
+}
+
 Config.Animations = {
     foraging = {
         dict = "amb@world_human_gardener_plant@male@base",
@@ -499,13 +716,8 @@ Config.Animations = {
         prop = "prop_w_me_hatchet",
         particle = { asset = 'core', name = 'ent_anim_tree_fall_dust' }
     },
-    mining = {
-        dict = "melee@large_wpn@streamed_core",
-        anim = "ground_attack_on_spot",
-        duration = 5000,
-        prop = "prop_tool_pickaxe",
-        particle = { asset = 'core', name = 'ent_anim_mine_dust' }
-    },
+    -- Mining animations are now handled by the new tool system in client.lua
+    -- This provides better reliability with GTA V scenarios and built-in animations
     scavenging = {
         dict = "amb@prop_human_bum_bin@base",
         anim = "base",
@@ -539,82 +751,43 @@ Config.ProgressBar = {
     foraging = {
         label = "Foraging...",
         duration = 5000
+        -- Tool-specific durations are now handled by the new tool system in client.lua
     },
     cement = {
         label = "Grabbing Cement...",
         duration = 5000
+        -- Tool-specific durations are now handled by the new tool system in client.lua
     },
     logging = {
         label = "Chopping wood...",
         duration = 8000
+        -- Tool-specific durations are now handled by the new tool system in client.lua
     },
     mining = {
         label = "Mining...",
-        duration = 10000
+        duration = 10000,  -- Default fallback duration (10 seconds)
+        -- Tool-specific durations for mining activities (in milliseconds)
+        -- Modify these values to change mining speed for each tool
+        toolDurations = {
+            pickaxe = 9000,      -- 9 seconds (slowest)
+            mining_drill = 6500,  -- 6.5 seconds (medium)
+            mining_laser = 3000   -- 3 seconds (fastest)
+        }
     },
     scavenging = {
         label = "Searching for scrap...",
         duration = 6000
+        -- Tool-specific durations are now handled by the new tool system in client.lua
     },
-    recycling = {
-        label = "Recycling materials...",
+    smelting = {
+        label = "Smelting materials...",
         duration = 7000
+        -- Tool-specific durations are now handled by the new tool system in client.lua
     },
     advanced_scavenging = {
         label = "Searching for advanced components...",
         duration = 6000
+        -- Tool-specific durations are now handled by the new tool system in client.lua
     }
 }
 
-Config.Blips = {
-    enabled = false,
-    foraging = {
-        enabled = true,
-        sprite = 496,
-        color = 2,
-        scale = 0.8,
-        label = 'Foraging Zone'
-    },
-    logging = {
-        enabled = true,
-        sprite = 285,
-        color = 25,
-        scale = 0.8,
-        label = 'Logging Zone'
-    },
-    cement = {
-        enabled = false,
-        sprite = 285,
-        color = 25,
-        scale = 0.8,
-        label = 'Cement Zone'
-    },
-    mining = {
-        enabled = true,
-        sprite = 618,
-        color = 28,
-        scale = 0.8,
-        label = 'Mining Zone'
-    },
-    scavenging = {
-        enabled = true,
-        sprite = 365,
-        color = 46,
-        scale = 0.8,
-        label = 'Scavenging Zone'
-    },
-    recycling = {
-        enabled = true,
-        sprite = 467,
-        color = 43,
-        scale = 0.8,
-        label = 'Recycling Center'
-    },
-    advanced_scavenging = {
-        enabled = true,
-        sprite = 365,
-        color = 46,
-        scale = 0.8,
-        label = 'Advanced Scavenging Zone'
-    }
-}

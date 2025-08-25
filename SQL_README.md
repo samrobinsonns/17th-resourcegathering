@@ -16,6 +16,7 @@ Stores the main mining data for each player.
 | `mining_xp` | int(11) | Current mining experience points |
 | `mining_level` | int(11) | Current mining level |
 | `total_mined` | int(11) | Total number of mining operations |
+| `total_smelted` | int(11) | Total number of items smelted |
 | `last_mined` | timestamp | Last time player mined |
 | `created_at` | timestamp | When record was created |
 | `updated_at` | timestamp | When record was last updated |
@@ -81,6 +82,7 @@ SELECT
     COUNT(*) as total_players,
     AVG(mining_level) as avg_level,
     SUM(total_mined) as total_operations,
+    SUM(total_smelted) as total_items_smelted,
     MAX(mining_level) as highest_level
 FROM mining_players;
 ```

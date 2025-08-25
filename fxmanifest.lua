@@ -4,11 +4,11 @@ fx_version 'cerulean'
 game 'gta5'
 
 author 'Metromods'
-description 'Resource Gathering System for Fancy'
+description 'Resource Gathering System for QB-Core with ox_inventory & ox_target'
 version '1.0.0'
 
 shared_scripts {
-    '@17th-base/shared/locale.lua',
+    '@qb-core/shared/locale.lua',
     '@ox_lib/init.lua',
     'config.lua'
 }

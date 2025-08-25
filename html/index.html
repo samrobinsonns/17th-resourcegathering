@@ -27,6 +27,10 @@
                                 <span id="totalMined">0</span>
                             </div>
                             <div class="stat-item">
+                                <i class="fas fa-fire"></i>
+                                <span id="totalSmelted">0</span>
+                            </div>
+                            <div class="stat-item">
                                 <i class="fas fa-star"></i>
                                 <span id="miningLevel">Level 1</span>
                             </div>
@@ -109,6 +113,32 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="hero-stat">
+                                    <div class="hero-icon warning">
+                                        <i class="fas fa-fire"></i>
+                                    </div>
+                                    <div class="hero-content">
+                                        <div class="hero-value" id="totalSmeltedValue">0</div>
+                                        <div class="hero-label">Total Smelted</div>
+                                        <div class="hero-trend success">
+                                            <i class="fas fa-arrow-up"></i>
+                                            <span>Smelting Progress</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="hero-stat">
+                                    <div class="hero-icon primary">
+                                        <i class="fas fa-trophy"></i>
+                                    </div>
+                                    <div class="hero-content">
+                                        <div class="hero-value" id="leaderboardPosition">--</div>
+                                        <div class="hero-label">Leaderboard Position</div>
+                                        <div class="hero-trend info">
+                                            <i class="fas fa-chart-line"></i>
+                                            <span>Global Ranking</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="xp-progress-section">
@@ -131,63 +161,8 @@
                                 <p>Upgrade your tools to mine more efficiently</p>
                             </div>
 
-                            <div class="equipment-grid">
-                                <div class="equipment-item" id="pickaxe-item">
-                                    <div class="equipment-icon">
-                                        <i class="fas fa-hammer"></i>
-                                    </div>
-                                    <div class="equipment-details">
-                                        <h3>Pickaxe</h3>
-                                        <p class="equipment-description">Basic mining tool for beginners</p>
-                                        <div class="equipment-requirements">
-                                            <span class="requirement">Level Required: 1</span>
-                                        </div>
-                                        <div class="equipment-status" id="pickaxe-status">
-                                            <span class="status-available">Available</span>
-                                        </div>
-                                    </div>
-                                    <div class="equipment-actions">
-                                        <button class="btn btn-primary" id="pickaxe-btn">Get Pickaxe</button>
-                                    </div>
-                                </div>
-
-                                <div class="equipment-item" id="drill-item">
-                                    <div class="equipment-icon">
-                                        <i class="fas fa-drill"></i>
-                                    </div>
-                                    <div class="equipment-details">
-                                        <h3>Mining Drill</h3>
-                                        <p class="equipment-description">Advanced drilling equipment for intermediate miners</p>
-                                        <div class="equipment-requirements">
-                                            <span class="requirement">Level Required: 25</span>
-                                        </div>
-                                        <div class="equipment-status" id="drill-status">
-                                            <span class="status-locked">Locked</span>
-                                        </div>
-                                    </div>
-                                    <div class="equipment-actions">
-                                        <button class="btn btn-secondary" id="drill-btn" disabled>Level 25 Required</button>
-                                    </div>
-                                </div>
-
-                                <div class="equipment-item" id="laser-item">
-                                    <div class="equipment-icon">
-                                        <i class="fas fa-laser-pointer"></i>
-                                    </div>
-                                    <div class="equipment-details">
-                                        <h3>Mining Laser</h3>
-                                        <p class="equipment-description">High-tech laser mining for expert miners</p>
-                                        <div class="equipment-requirements">
-                                            <span class="requirement">Level Required: 50</span>
-                                        </div>
-                                        <div class="equipment-status" id="laser-status">
-                                            <span class="status-locked">Locked</span>
-                                        </div>
-                                    </div>
-                                    <div class="equipment-actions">
-                                        <button class="btn btn-secondary" id="laser-btn" disabled>Level 50 Required</button>
-                                    </div>
-                                </div>
+                            <div class="equipment-grid" id="equipmentGrid">
+                                <!-- Equipment items will be dynamically populated from config -->
                             </div>
                         </div>
 
@@ -195,41 +170,44 @@
                         <div class="tab-pane" id="leaderboard">
                             <div class="leaderboard-header">
                                 <h2>Mining Leaderboard</h2>
-                                <p>Top miners in the company</p>
+                                <div class="leaderboard-controls">
+                                    <button id="refreshLeaderboard" class="refresh-btn">
+                                        <i class="fas fa-sync-alt"></i> Refresh
+                                    </button>
+                                    <div class="filter-group">
+                                        <label for="leaderboardFilter">Sort By:</label>
+                                        <select id="leaderboardFilter" class="filter-select">
+                                            <option value="level">🏆 Mining Level</option>
+                                            <option value="smelted">🔥 Total Smelted</option>
+                                            <option value="mined">⛏️ Total Mined</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="leaderboard-filters">
-                                <select id="leaderboardPeriod">
-                                    <option value="weekly">This Week</option>
-                                    <option value="monthly">This Month</option>
-                                    <option value="alltime">All Time</option>
-                                </select>
-                            </div>
-
-                            <div class="leaderboard-list" id="leaderboardList">
-                                <div class="leaderboard-item">
-                                    <div class="rank">1</div>
-                                    <div class="player-info">
-                                        <div class="player-name">Loading...</div>
-                                        <div class="player-level">Level 0</div>
+                            <div class="leaderboard-table">
+                                <div class="table-header">
+                                    <div class="header-rank">Rank</div>
+                                    <div class="header-player">Player</div>
+                                    <div class="header-level">Level</div>
+                                    <div class="header-xp">XP</div>
+                                    <div class="header-mined">Mined</div>
+                                    <div class="header-smelted">Smelted</div>
+                                </div>
+                                <div class="leaderboard-list" id="leaderboardList">
+                                    <!-- Loading state -->
+                                    <div class="leaderboard-loading">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        <p>Loading leaderboard...</p>
                                     </div>
-                                    <div class="player-stats">
-                                        <div class="total-mined">0 Mined</div>
-                                    </div>
+                                    
+                                    <!-- Leaderboard items will be dynamically populated -->
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-spinner">
-            <i class="fas fa-spinner fa-spin"></i>
-            <p>Loading...</p>
         </div>
     </div>
 

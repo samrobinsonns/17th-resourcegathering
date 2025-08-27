@@ -174,8 +174,8 @@ Config.XPSystem = {
         -- Better tool unlock levels
         tool_unlocks = {
             pickaxe = 0,
-            drill = 2,
-            laser = 2
+            drill = 20,
+            laser = 40
         }
     }
 }

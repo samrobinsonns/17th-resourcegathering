@@ -7,15 +7,8 @@ local inventory = exports['ox_inventory']
 local function GetMiningPlayerData(citizenId)
     local result = exports.oxmysql:query_async('SELECT * FROM mining_players WHERE citizen_id = ?', {citizenId})
     if result and result[1] then
-        print('^3[DEBUG] GetMiningPlayerData retrieved:^0')
-        print('^3[DEBUG]   CitizenID:', result[1].citizen_id .. '^0')
-        print('^3[DEBUG]   MiningXP:', result[1].mining_xp .. '^0')
-        print('^3[DEBUG]   MiningLevel:', result[1].mining_level .. '^0')
-        print('^3[DEBUG]   TotalMined:', result[1].total_mined .. '^0')
-        print('^3[DEBUG]   TotalSmelted:', tostring(result[1].total_smelted) .. '^0')
         return result[1]
     end
-    print('^3[DEBUG] GetMiningPlayerData: No data found for citizen:', citizenId .. '^0')
     return nil
 end
 
@@ -34,20 +27,9 @@ local function CreateMiningPlayer(citizenId)
 end
 
 local function UpdateMiningPlayerData(citizenId, miningXP, miningLevel, totalMined, totalSmelted)
-    print('^3[DEBUG] UpdateMiningPlayerData called with:^0')
-    print('^3[DEBUG]   CitizenID:', citizenId .. '^0')
-    print('^3[DEBUG]   MiningXP:', miningXP .. '^0')
-    print('^3[DEBUG]   MiningLevel:', miningLevel .. '^0')
-    print('^3[DEBUG]   TotalMined:', totalMined .. '^0')
-    print('^3[DEBUG]   TotalSmelted:', totalSmelted or 0 .. '^0')
-    
-    print('^3[DEBUG] Executing SQL: UPDATE mining_players SET mining_xp = ?, mining_level = ?, total_mined = ?, total_smelted = ?, last_mined = CURRENT_TIMESTAMP WHERE citizen_id = ?^0')
-    print('^3[DEBUG] SQL Parameters:', miningXP, miningLevel, totalMined, (totalSmelted or 0), citizenId .. '^0')
-    
     local success = exports.oxmysql:execute_async('UPDATE mining_players SET mining_xp = ?, mining_level = ?, total_mined = ?, total_smelted = ?, last_mined = CURRENT_TIMESTAMP WHERE citizen_id = ?', 
         {miningXP, miningLevel, totalMined, totalSmelted or 0, citizenId})
     
-    print('^3[DEBUG] UpdateMiningPlayerData result:', tostring(success) .. '^0')
     if success then
         print('^2[SUCCESS] Database update executed successfully^0')
     else
@@ -230,8 +212,6 @@ RegisterNetEvent('resource:gather', function(activity, zone)
     local Player = QBCore.Functions.GetPlayer(src)
     if not Player then return end
     
-    print('^3[DEBUG] resource:gather event received - Activity:', activity, 'Zone:', json.encode(zone) .. '^0')
-    
     -- local skillLevel = exports['qb-skills']:getSkill(tostring(src), 'resource_gathering').level or 0
     local skillLevel = 1 -- Default level for testing
     local tier = GetSkillTier(skillLevel)
@@ -243,7 +223,7 @@ RegisterNetEvent('resource:gather', function(activity, zone)
     local amount = math.floor(baseAmount * tier.amount_multiplier)
     if amount < 1 then amount = 1 end -- Ensure at least 1 item
     
-    -- Debug: Check if item exists in ox_inventory
+    -- Check if item exists in ox_inventory
     local itemData = inventory:Items(item.name)
     if not itemData then
         print('^1[ERROR] Item not found in ox_inventory: ' .. item.name .. '^0')
@@ -256,8 +236,6 @@ RegisterNetEvent('resource:gather', function(activity, zone)
     if success then
         -- Award skill XP and update mining data
         local xp = Config.XPSystem.rewards.mining or 20
-        print('^3[DEBUG] Mining XP calculation - Base XP:', xp, 'Activity:', activity .. '^0')
-        print('^3[DEBUG] Config.XPSystem.rewards.mining value:', Config.XPSystem.rewards.mining .. '^0')
         -- exports['17th-skills']:addSkill(tostring(src), 'resource_gathering', xp)
         -- Skills system disabled for basic testing
         
@@ -280,19 +258,8 @@ RegisterNetEvent('resource:gather', function(activity, zone)
         local currentTotalMined = miningData.total_mined + 1
         local currentLevel, actualXP = GetLevelFromXP(currentXP)
         
-        print('^3[DEBUG] Mining XP update - Old XP:', miningData.mining_xp, 'New XP:', currentXP, 'Level:', currentLevel .. '^0')
-        print('^3[DEBUG] GetLevelFromXP returned - Level:', currentLevel, 'ActualXP:', actualXP .. '^0')
-        
         -- Update database with actual XP value (keep existing total_smelted)
         local currentTotalSmelted = miningData.total_smelted or 0
-        print('^3[DEBUG] Mining update - XP:', actualXP, 'Level:', currentLevel, 'TotalMined:', currentTotalMined, 'TotalSmelted:', currentTotalSmelted .. '^0')
-        
-        print('^3[DEBUG] About to call UpdateMiningPlayerData with:^0')
-        print('^3[DEBUG]   CitizenID:', citizenId .. '^0')
-        print('^3[DEBUG]   MiningXP:', actualXP .. '^0')
-        print('^3[DEBUG]   MiningLevel:', currentLevel .. '^0')
-        print('^3[DEBUG]   TotalMined:', currentTotalMined .. '^0')
-        print('^3[DEBUG]   TotalSmelted:', currentTotalSmelted .. '^0')
         
         local updateSuccess = UpdateMiningPlayerData(citizenId, actualXP, currentLevel, currentTotalMined, currentTotalSmelted)
         if not updateSuccess then
@@ -300,12 +267,8 @@ RegisterNetEvent('resource:gather', function(activity, zone)
             return
         end
         
-        print('^2[SUCCESS] Database update completed successfully^0')
-        
         -- Add mining history
         AddMiningHistory(citizenId, 'pickaxe', xp, {name = item.name, amount = amount})
-        
-        print('^2[SUCCESS] Database updated successfully - XP:', actualXP, 'Level:', currentLevel, 'TotalMined:', currentTotalMined .. '^0')
         
         -- Calculate XP requirements for next level using config values
         local xpForNextLevel = GetXPForNextLevel(currentLevel)
@@ -345,8 +308,6 @@ RegisterNetEvent('resource:smelt', function(itemName, amount)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
     if not Player then return end
-    
-    print('^3[DEBUG]^0 resource:smelt event received - Item:', itemName, 'Amount:', amount .. '^0')
     
     if not Config.RecyclingCenter.inputs[itemName] then
         TriggerClientEvent('QBCore:Notify', src, 'Invalid item for smelting!', 'error')
@@ -391,16 +352,12 @@ RegisterNetEvent('resource:smelt', function(itemName, amount)
     -- Ensure duration stays within bounds
     duration = math.max(smeltingConfig.minDuration, math.min(smeltingConfig.maxDuration, duration))
     
-    print('^3[DEBUG]^0 Smelting duration - Level:', playerLevel, 'Base:', baseDuration, 'Final:', duration .. '^0')
-    
     -- Remove the ore from player inventory when smelting starts
     local removeSuccess = exports['ox_inventory']:RemoveItem(src, itemName, amount)
     if not removeSuccess then
         TriggerClientEvent('QBCore:Notify', src, 'Failed to remove ' .. itemName .. ' from inventory!', 'error')
         return
     end
-    
-    print('^3[DEBUG]^0 Removed ' .. amount .. 'x ' .. itemName .. ' from player inventory^0')
     
     -- Start smelting process with progress bar
     TriggerClientEvent('resource:startSmelting', src, {
@@ -419,167 +376,17 @@ end)
 --     -- Event disabled to prevent conflicts
 -- end)
 
--- Test command for leaderboard system
-RegisterCommand('testleaderboard', function(source, args)
-    local src = source
-    if src == 0 then
-        print('^1[ERROR] This command must be run by a player!^0')
-        return
-    end
-    
-    local filterType = args[1] or 'level'
-    print('^3[DEBUG] Testing leaderboard with filter:', filterType .. '^0')
-    
-    -- Test the leaderboard system
-    TriggerEvent('mining:getLeaderboardFiltered', src, filterType)
-    
-    print('^2[DEBUG] Leaderboard test completed for filter:', filterType .. '^0')
-end, false)
 
--- Test command for database connection
-RegisterCommand('testdb', function(source, args)
-    local src = source
-    if src == 0 then
-        print('^1[ERROR] This command must be run by a player!^0')
-        return
-    end
-    
-    local Player = QBCore.Functions.GetPlayer(src)
-    if not Player then return end
-    
-    local citizenId = Player.PlayerData.citizenid
-    print('^3[DEBUG] Testing database connection for player:', citizenId .. '^0')
-    
-    -- Test basic database operations
-    local miningData = GetMiningPlayerData(citizenId)
-    if miningData then
-        print('^2[SUCCESS] Retrieved mining data:^0')
-        print('^3[DEBUG]   XP:', miningData.mining_xp .. '^0')
-        print('^3[DEBUG]   Level:', miningData.mining_level .. '^0')
-        print('^3[DEBUG]   TotalMined:', miningData.total_mined .. '^0')
-        print('^3[DEBUG]   TotalSmelted:', tostring(miningData.total_smelted) .. '^0')
-    else
-        print('^3[DEBUG] No mining data found, creating new player...^0')
-        local newData = CreateMiningPlayer(citizenId)
-        if newData then
-            print('^2[SUCCESS] Created new mining player^0')
-        else
-            print('^1[ERROR] Failed to create mining player^0')
-        end
-    end
-end, false)
 
--- Simple ping test event
-RegisterNetEvent('test:ping', function(message)
-    local src = source
-    print('^2[DEBUG]^0 Received ping from player', src, 'Message:', message .. '^0')
-    TriggerClientEvent('QBCore:Notify', src, 'Server received your ping!', 'success')
-end)
 
--- Debug command to check smelting config
-RegisterCommand('checksmelting', function(source, args)
-    local src = source
-    if src == 0 then
-        print('^1[ERROR] This command must be run by a player!^0')
-        return
-    end
-    
-    print('^3[DEBUG]^0 Current smelting configuration:^0')
-    print('^3[DEBUG]^0 Config.RecyclingCenter.outputs:^0')
-    for oreType, output in pairs(Config.RecyclingCenter.outputs) do
-        print('^3[DEBUG]^0   ' .. oreType .. ': item=' .. output.item .. ', ratio=' .. output.ratio .. '^0')
-    end
-    
-    TriggerClientEvent('QBCore:Notify', src, 'Check server console for smelting config', 'primary')
-end, false)
 
--- Command to fix missing total_smelted values in database
-RegisterCommand('fixsmeltingdb', function(source, args)
-    local src = source
-    if src ~= 0 then
-        TriggerClientEvent('QBCore:Notify', src, 'This command can only be run from console!', 'error')
-        return
-    end
-    
-    print('^3[DEBUG] Fixing missing total_smelted values in database...^0')
-    
-    -- Update all existing records to set total_smelted = 0 if it's NULL
-    local success = exports.oxmysql:execute_async('UPDATE mining_players SET total_smelted = 0 WHERE total_smelted IS NULL')
-    if success then
-        print('^2[SUCCESS] Fixed missing total_smelted values^0')
-    else
-        print('^1[ERROR] Failed to fix total_smelted values^0')
-    end
-    
-    -- Show current database state
-    local result = exports.oxmysql:query_async('SELECT COUNT(*) as total, COUNT(total_smelted) as with_smelting FROM mining_players')
-    if result and result[1] then
-        print('^3[DEBUG] Database state:^0')
-        print('^3[DEBUG]   Total players:', result[1].total .. '^0')
-        print('^3[DEBUG]   Players with total_smelted:', result[1].with_smelting .. '^0')
-    end
-end, true)
 
--- Command to manually add XP for testing
-RegisterCommand('addxp', function(source, args)
-    local src = source
-    if src == 0 then
-        print('^1[ERROR] This command must be run by a player!^0')
-        return
-    end
-    
-    local Player = QBCore.Functions.GetPlayer(src)
-    if not Player then return end
-    
-    local xpAmount = tonumber(args[1]) or 50
-    local activity = args[2] or 'mining'
-    
-    print('^3[DEBUG] Manually adding XP - Player:', src, 'Amount:', xpAmount, 'Activity:', activity .. '^0')
-    
-    local citizenId = Player.PlayerData.citizenid
-    local miningData = GetMiningPlayerData(citizenId)
-    
-    if not miningData then
-        miningData = CreateMiningPlayer(citizenId)
-        if not miningData then
-            print('^1[ERROR] Failed to create mining player data^0')
-            return
-        end
-    end
-    
-    -- Add XP and update level
-    local currentXP = miningData.mining_xp + xpAmount
-    local currentLevel, actualXP = GetLevelFromXP(currentXP)
-    
-    print('^3[DEBUG] XP Update - Old XP:', miningData.mining_xp, 'New XP:', currentXP, 'Level:', currentLevel .. '^0')
-    
-    -- Update database
-    local updateSuccess = UpdateMiningPlayerData(citizenId, actualXP, currentLevel, miningData.total_mined, miningData.total_smelted or 0)
-    if updateSuccess then
-        print('^2[SUCCESS] XP updated successfully^0')
-        TriggerClientEvent('QBCore:Notify', src, 'Added ' .. xpAmount .. ' XP! New total: ' .. currentXP, 'success')
-        
-        -- Calculate XP requirements for next level using config values
-        local xpForNextLevel = GetXPForNextLevel(currentLevel)
-        local xpProgress = GetXPProgress(currentLevel, currentXP)
-        
-        -- Send updated data to client
-        TriggerClientEvent('mining:updateMiningData', src, {
-            xpGained = xpAmount,
-            itemsFound = {name = 'manual_xp', amount = 1},
-            activity = activity,
-            newTotalMined = miningData.total_mined,
-            newTotalSmelted = miningData.total_smelted or 0,
-            newLevel = currentLevel,
-            newXP = currentXP,
-            xpForNextLevel = xpForNextLevel,
-            xpProgress = xpProgress
-        })
-    else
-        print('^1[ERROR] Failed to update XP^0')
-        TriggerClientEvent('QBCore:Notify', src, 'Failed to update XP!', 'error')
-    end
-end, false)
+
+
+
+
+
+
 
 -- Mining XP Event (DISABLED - Using new database system instead)
 -- This old event was causing conflicts with the new database-based XP system
@@ -635,34 +442,7 @@ RegisterNetEvent('mining:getPlayerData', function()
     TriggerClientEvent('mining:updatePlayerData', src, playerData)
 end)
 
--- Debug command to set player XP (temporary for testing)
-RegisterCommand('setminingxp', function(source, args, rawCommand)
-    local src = source
-    local Player = QBCore.Functions.GetPlayer(src)
-    if not Player then return end
-    
-    local targetXP = tonumber(args[1]) or 100 -- Default to 100 XP (level 2)
-    local citizenId = Player.PlayerData.citizenid
-    
-    local miningData = GetMiningPlayerData(citizenId)
-    if not miningData then
-        miningData = CreateMiningPlayer(citizenId)
-        if not miningData then
-            print('^1[ERROR] Failed to create mining player data for: ' .. citizenId .. '^0')
-            return
-        end
-    end
-    
-    local currentLevel, actualXP = GetLevelFromXP(targetXP)
-    local updateSuccess = UpdateMiningPlayerData(citizenId, actualXP, currentLevel, miningData.total_mined)
-    
-    if updateSuccess then
-        TriggerClientEvent('QBCore:Notify', src, 'Mining XP set to ' .. targetXP .. ' (Level ' .. currentLevel .. ')', 'success')
-        print('^2[DEBUG] Set player ' .. src .. ' mining XP to ' .. targetXP .. ' (Level ' .. currentLevel .. ')^0')
-    else
-        TriggerClientEvent('QBCore:Notify', src, 'Failed to update mining XP', 'error')
-    end
-end, false)
+
 
 -- Get Mining Leaderboard Event
 RegisterNetEvent('mining:getLeaderboard', function(filterType)
@@ -672,8 +452,6 @@ RegisterNetEvent('mining:getLeaderboard', function(filterType)
     
     -- Default to level filter if none specified
     filterType = filterType or 'level'
-    
-    print('^3[DEBUG]^0 Getting leaderboard with filter:', filterType .. '^0')
     
     -- Get leaderboard data from database (top 20)
     local leaderboardData = GetMiningLeaderboard(20, filterType)
@@ -691,8 +469,6 @@ RegisterNetEvent('mining:getLeaderboard', function(filterType)
         })
     end
     
-    print('^3[DEBUG]^0 Sending leaderboard with', #formattedLeaderboard, 'players, filter:', filterType .. '^0')
-    
     TriggerClientEvent('mining:updateLeaderboard', src, formattedLeaderboard, filterType)
 end)
 
@@ -705,8 +481,6 @@ RegisterNetEvent('mining:getLeaderboardFiltered', function(filterType)
     if not filterType or (filterType ~= 'level' and filterType ~= 'smelted' and filterType ~= 'mined') then
         filterType = 'level' -- Default to level filter
     end
-    
-    print('^3[DEBUG]^0 Getting filtered leaderboard:', filterType .. '^0')
     
     -- Get leaderboard data with specific filter
     local leaderboardData = GetMiningLeaderboard(20, filterType)
@@ -723,8 +497,6 @@ RegisterNetEvent('mining:getLeaderboardFiltered', function(filterType)
             totalSmelted = player.total_smelted or 0
         })
     end
-    
-    print('^3[DEBUG]^0 Sending filtered leaderboard with', #formattedLeaderboard, 'players, filter:', filterType .. '^0')
     
     TriggerClientEvent('mining:updateLeaderboard', src, formattedLeaderboard, filterType)
 end)
@@ -825,19 +597,9 @@ RegisterNetEvent('resource:completeSmelting', function(itemName, amount, output,
     local Player = QBCore.Functions.GetPlayer(src)
     if not Player then return end
     
-    print('^3[DEBUG]^0 Smelting completed - Item:', itemName, 'Amount:', amount, 'Level:', playerLevel .. '^0')
-    
     -- Calculate output amount
     local outputAmount = math.floor(amount * output.ratio)
     if outputAmount < 1 then outputAmount = 1 end
-    
-    -- Debug logging for smelting output calculation
-    print('^3[DEBUG]^0 Smelting output calculation:')
-    print('^3[DEBUG]^0   Input amount:', amount)
-    print('^3[DEBUG]^0   Output ratio:', output.ratio)
-    print('^3[DEBUG]^0   Raw calculation:', amount * output.ratio)
-    print('^3[DEBUG]^0   After math.floor:', outputAmount)
-    print('^3[DEBUG]^0   Final output amount:', outputAmount)
     
     -- Add smelted items to player inventory
     local addSuccess = exports['ox_inventory']:AddItem(src, output.item, outputAmount)
@@ -849,7 +611,6 @@ RegisterNetEvent('resource:completeSmelting', function(itemName, amount, output,
         -- Award smelting XP PER ITEM (not per process)
         local baseXP = Config.XPSystem.rewards.smelting or 30
         local totalXP = baseXP * amount -- XP per item × number of items
-        print('^3[DEBUG]^0 Smelting XP calculation - Base XP per item:', baseXP, 'Items smelted:', amount, 'Total XP:', totalXP .. '^0')
         
         -- Update player mining data in database
         local citizenId = Player.PlayerData.citizenid
@@ -867,8 +628,6 @@ RegisterNetEvent('resource:completeSmelting', function(itemName, amount, output,
         local currentTotalMined = miningData.total_mined + 1
         local currentTotalSmelted = (miningData.total_smelted or 0) + amount -- Increase by items processed, not output
         local currentLevel, actualXP = GetLevelFromXP(currentXP)
-        
-        print('^3[DEBUG]^0 Smelting database update - XP gained:', totalXP, 'Total items processed:', amount, 'New total smelted:', currentTotalSmelted .. '^0')
         
         local updateSuccess = UpdateMiningPlayerData(citizenId, actualXP, currentLevel, currentTotalMined, currentTotalSmelted)
         if not updateSuccess then
@@ -895,8 +654,6 @@ RegisterNetEvent('resource:completeSmelting', function(itemName, amount, output,
             xpForNextLevel = xpForNextLevel,
             xpProgress = xpProgress
         })
-        
-        print('^2[SUCCESS]^0 Smelting completed - Total XP:', totalXP, 'Level:', currentLevel, 'TotalSmelted:', currentTotalSmelted .. '^0')
     else
         -- Refund input items if inventory is full (ore was already removed when smelting started)
         exports['ox_inventory']:AddItem(src, itemName, amount)

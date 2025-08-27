@@ -185,12 +185,7 @@ class ResourceGatheringUI {
             const leaderboardPositionElement = document.getElementById('leaderboardPosition');
             if (leaderboardPositionElement) {
                 const position = this.getPlayerLeaderboardPosition();
-                console.log('🔍 Dashboard Position Calculation:', {
-                    playerTotalMined: this.playerData.totalMined,
-                    leaderboardDataLength: this.leaderboardData.length,
-                    positionDataLength: this.leaderboardDataForPosition?.length,
-                    calculatedPosition: position
-                });
+
                 
                 if (position > 0) {
                     leaderboardPositionElement.textContent = `#${position}`;
@@ -215,7 +210,7 @@ class ResourceGatheringUI {
             if (this.playerData.xpProgress !== undefined && this.playerData.xpForNextLevel !== undefined) {
                 const progressPercentage = this.playerData.xpProgress;
                 
-                console.log('🔧 Using server-calculated XP progress:', progressPercentage + '%');
+
                 
                 // Update XP bar
                 const xpFill = document.getElementById('xpFill');
@@ -243,7 +238,7 @@ class ResourceGatheringUI {
                 
             } else {
                 // Fallback to client-side calculation
-                console.log('⚠️ Using fallback XP calculation');
+
                 
                 const currentLevelXP = this.getLevelXP(currentLevel);
                 const nextLevelXP = this.getLevelXP(currentLevel + 1);
@@ -278,7 +273,7 @@ class ResourceGatheringUI {
                 }
             }
             
-            console.log('🔧 XP Progress updated - Level:', currentLevel, 'XP:', currentXP, 'Progress:', this.playerData.xpProgress + '%');
+
             
         } catch (error) {
             console.error('Error updating XP progress:', error);
@@ -316,7 +311,7 @@ class ResourceGatheringUI {
 
     updateEquipmentStatus() {
         // Update all equipment status based on current player level
-        console.log('🔧 Updating equipment status. Player level:', this.playerData.level);
+
         
         Object.keys(this.equipmentConfig).forEach(toolKey => {
             const tool = this.equipmentConfig[toolKey];
@@ -324,12 +319,12 @@ class ResourceGatheringUI {
             const buttonElement = document.getElementById(`${toolKey}-btn`);
             
             if (!statusElement || !buttonElement) {
-                console.log('⚠️ Missing elements for:', toolKey);
+    
                 return;
             }
             
             const isUnlocked = this.playerData.level >= tool.unlockLevel;
-            console.log(`🔧 ${toolKey}: Level ${this.playerData.level} >= ${tool.unlockLevel} = ${isUnlocked}`);
+
             
             if (isUnlocked) {
                 // Equipment is available
@@ -337,14 +332,14 @@ class ResourceGatheringUI {
                 buttonElement.className = 'btn btn-primary';
                 buttonElement.disabled = false;
                 buttonElement.textContent = `Get ${tool.label}`;
-                console.log(`✅ ${toolKey} unlocked`);
+
             } else {
                 // Equipment is locked
                 statusElement.innerHTML = '<span class="status-locked">Locked</span>';
                 buttonElement.className = 'btn btn-secondary';
                 buttonElement.disabled = true;
                 buttonElement.textContent = `Level ${tool.unlockLevel} Required`;
-                console.log(`❌ ${toolKey} locked`);
+
             }
         });
     }
@@ -607,7 +602,7 @@ class ResourceGatheringUI {
         this.testMode = true;
         this.loadMockData();
         this.addTestControls();
-        console.log('🧪 Test Mode Enabled - Using Mock Data');
+
     }
 
     loadMockData() {
@@ -809,7 +804,7 @@ class ResourceGatheringUI {
     sendToClient(eventName, data) {
         if (this.testMode) {
             // In test mode, simulate responses
-            console.log(`[TEST MODE] Simulating ${eventName}:`, data);
+
             return;
         }
         
@@ -840,8 +835,8 @@ class ResourceGatheringUI {
                 break;
             case 'updatePlayerData':
                 if (message.playerData) {
-                    console.log('📊 Received player data from server:', message.playerData);
-                    console.log('🔧 Total Smelted value received:', message.playerData.totalSmelted);
+    
+            
                     this.playerData = message.playerData;
                     this.updatePlayerStats();
                     // Update equipment status when player data changes
@@ -855,8 +850,8 @@ class ResourceGatheringUI {
                 break;
             case 'updateLeaderboard':
                 if (message.leaderboardData) {
-                    console.log('🏆 Received leaderboard data:', message.leaderboardData);
-                    console.log('🔍 Filter type:', message.filterType || 'unknown');
+    
+        
                     
                     this.leaderboardData = message.leaderboardData;
                     this.currentFilter = message.filterType || this.currentFilter;
@@ -947,13 +942,13 @@ class ResourceGatheringUI {
     checkInventoryStatus() {
         if (this.testMode) {
             // In test mode, simulate inventory check
-            console.log('🧪 Test Mode: Checking inventory status for equipment');
+    
             return;
         }
         
         // In FiveM, check actual inventory for equipment
         // This would be called when the UI opens to sync with actual inventory
-        console.log('Checking actual inventory for mining equipment...');
+
     }
 
     // Handle successful gathering from FiveM
@@ -987,7 +982,7 @@ class ResourceGatheringUI {
             this.showNotification(`Level Up! You are now level ${this.playerData.level}!`, 'success');
         }
         
-        console.log(`Mining Success: +${gatheringData.xpGained} XP, Total: ${this.playerData.xp}, Level: ${this.playerData.level}, Total Mined: ${this.playerData.totalMined}`);
+        
     }
 
     // Simulate mining operation for testing
@@ -1021,7 +1016,7 @@ class ResourceGatheringUI {
             this.showNotification(`You gained ${totalXP} mining XP!`, 'success');
         }
         
-        console.log(`🧪 Test Mining: +${totalXP} XP, Total: ${this.playerData.xp}, Level: ${this.playerData.level}`);
+
     }
 }
 

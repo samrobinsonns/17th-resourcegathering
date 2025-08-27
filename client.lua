@@ -43,7 +43,7 @@ local function stopAllParticleEffects(ped)
     if activeParticleEffects[ped] then
         StopParticleFxLooped(activeParticleEffects[ped], false)
         activeParticleEffects[ped] = nil
-        print("^2[DEBUG]^0 Stopped particle effects for ped")
+    
     end
 end
 
@@ -55,14 +55,14 @@ local function getToolDuration(toolType)
     if Config.ProgressBar and Config.ProgressBar.mining and Config.ProgressBar.mining.toolDurations then
         local duration = Config.ProgressBar.mining.toolDurations[toolType]
         if duration then
-            print('^3[DEBUG]^0 Using config duration for', toolType .. ':', duration .. 'ms^0')
+    
             return duration
         end
     end
     
     -- Fallback to default mining duration
     local defaultDuration = Config.ProgressBar and Config.ProgressBar.mining and Config.ProgressBar.mining.duration or 10000
-    print('^3[DEBUG]^0 Using fallback duration for', toolType .. ':', defaultDuration .. 'ms^0')
+    
     return defaultDuration
 end
 
@@ -96,7 +96,7 @@ local function getToolConfig(toolType)
     if config then
         -- Add duration from config
         config.duration = getToolDuration(toolType)
-        print('^3[DEBUG]^0 Generated dynamic tool config for:', toolType, 'duration:', config.duration .. 'ms^0')
+
         return config
     end
     

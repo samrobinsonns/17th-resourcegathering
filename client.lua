@@ -2125,11 +2125,8 @@ RegisterNetEvent('mining:updateMiningData', function(data)
         }
     })
     
-    -- Calculate XP requirements for next level using config values
-    local xpForNextLevel = GetXPForNextLevel(miningData.level)
-    local xpProgress = GetXPProgress(miningData.level, miningData.xp)
-    
-    -- Also send updated player data to UI with XP requirements
+    -- Use server-provided XP values instead of calculating locally
+    -- This ensures consistency with the server's config-based XP system
     SendNUIMessage({
         type = 'updatePlayerData',
         playerData = {
@@ -2138,8 +2135,8 @@ RegisterNetEvent('mining:updateMiningData', function(data)
             tier = miningData.tier,
             totalGathered = miningData.totalMined,
             totalSmelted = miningData.totalSmelted or 0,
-            xpForNextLevel = xpForNextLevel,
-            xpProgress = xpProgress
+            xpForNextLevel = data.xpForNextLevel or GetXPForNextLevel(miningData.level),
+            xpProgress = data.xpProgress or GetXPProgress(miningData.level, miningData.xp)
         }
     })
 end)

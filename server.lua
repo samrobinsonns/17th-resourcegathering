@@ -307,6 +307,10 @@ RegisterNetEvent('resource:gather', function(activity, zone)
         
         print('^2[SUCCESS] Database updated successfully - XP:', actualXP, 'Level:', currentLevel, 'TotalMined:', currentTotalMined .. '^0')
         
+        -- Calculate XP requirements for next level using config values
+        local xpForNextLevel = GetXPForNextLevel(currentLevel)
+        local xpProgress = GetXPProgress(currentLevel, actualXP)
+        
         -- Send updated mining data to client for UI update (client will handle notifications)
         TriggerClientEvent('mining:updateMiningData', src, {
             xpGained = xp,
@@ -314,7 +318,9 @@ RegisterNetEvent('resource:gather', function(activity, zone)
             activity = activity,
             newTotalMined = currentTotalMined,
             newLevel = currentLevel,
-            newXP = currentXP
+            newXP = currentXP,
+            xpForNextLevel = xpForNextLevel,
+            xpProgress = xpProgress
         })
         
         print('^2[SUCCESS] Added ' .. amount .. 'x ' .. item.name .. ' to player ' .. src .. '^0')
@@ -386,6 +392,15 @@ RegisterNetEvent('resource:smelt', function(itemName, amount)
     duration = math.max(smeltingConfig.minDuration, math.min(smeltingConfig.maxDuration, duration))
     
     print('^3[DEBUG]^0 Smelting duration - Level:', playerLevel, 'Base:', baseDuration, 'Final:', duration .. '^0')
+    
+    -- Remove the ore from player inventory when smelting starts
+    local removeSuccess = exports['ox_inventory']:RemoveItem(src, itemName, amount)
+    if not removeSuccess then
+        TriggerClientEvent('QBCore:Notify', src, 'Failed to remove ' .. itemName .. ' from inventory!', 'error')
+        return
+    end
+    
+    print('^3[DEBUG]^0 Removed ' .. amount .. 'x ' .. itemName .. ' from player inventory^0')
     
     -- Start smelting process with progress bar
     TriggerClientEvent('resource:startSmelting', src, {
@@ -461,6 +476,23 @@ RegisterNetEvent('test:ping', function(message)
     TriggerClientEvent('QBCore:Notify', src, 'Server received your ping!', 'success')
 end)
 
+-- Debug command to check smelting config
+RegisterCommand('checksmelting', function(source, args)
+    local src = source
+    if src == 0 then
+        print('^1[ERROR] This command must be run by a player!^0')
+        return
+    end
+    
+    print('^3[DEBUG]^0 Current smelting configuration:^0')
+    print('^3[DEBUG]^0 Config.RecyclingCenter.outputs:^0')
+    for oreType, output in pairs(Config.RecyclingCenter.outputs) do
+        print('^3[DEBUG]^0   ' .. oreType .. ': item=' .. output.item .. ', ratio=' .. output.ratio .. '^0')
+    end
+    
+    TriggerClientEvent('QBCore:Notify', src, 'Check server console for smelting config', 'primary')
+end, false)
+
 -- Command to fix missing total_smelted values in database
 RegisterCommand('fixsmeltingdb', function(source, args)
     local src = source
@@ -527,6 +559,10 @@ RegisterCommand('addxp', function(source, args)
         print('^2[SUCCESS] XP updated successfully^0')
         TriggerClientEvent('QBCore:Notify', src, 'Added ' .. xpAmount .. ' XP! New total: ' .. currentXP, 'success')
         
+        -- Calculate XP requirements for next level using config values
+        local xpForNextLevel = GetXPForNextLevel(currentLevel)
+        local xpProgress = GetXPProgress(currentLevel, currentXP)
+        
         -- Send updated data to client
         TriggerClientEvent('mining:updateMiningData', src, {
             xpGained = xpAmount,
@@ -535,7 +571,9 @@ RegisterCommand('addxp', function(source, args)
             newTotalMined = miningData.total_mined,
             newTotalSmelted = miningData.total_smelted or 0,
             newLevel = currentLevel,
-            newXP = currentXP
+            newXP = currentXP,
+            xpForNextLevel = xpForNextLevel,
+            xpProgress = xpProgress
         })
     else
         print('^1[ERROR] Failed to update XP^0')
@@ -793,6 +831,14 @@ RegisterNetEvent('resource:completeSmelting', function(itemName, amount, output,
     local outputAmount = math.floor(amount * output.ratio)
     if outputAmount < 1 then outputAmount = 1 end
     
+    -- Debug logging for smelting output calculation
+    print('^3[DEBUG]^0 Smelting output calculation:')
+    print('^3[DEBUG]^0   Input amount:', amount)
+    print('^3[DEBUG]^0   Output ratio:', output.ratio)
+    print('^3[DEBUG]^0   Raw calculation:', amount * output.ratio)
+    print('^3[DEBUG]^0   After math.floor:', outputAmount)
+    print('^3[DEBUG]^0   Final output amount:', outputAmount)
+    
     -- Add smelted items to player inventory
     local addSuccess = exports['ox_inventory']:AddItem(src, output.item, outputAmount)
     if addSuccess then
@@ -833,6 +879,10 @@ RegisterNetEvent('resource:completeSmelting', function(itemName, amount, output,
         -- Add mining history for each item processed
         AddMiningHistory(citizenId, 'smelting', totalXP, {name = output.item, amount = outputAmount})
         
+        -- Calculate XP requirements for next level using config values
+        local xpForNextLevel = GetXPForNextLevel(currentLevel)
+        local xpProgress = GetXPProgress(currentLevel, actualXP)
+        
         -- Trigger client update for UI
         TriggerClientEvent('mining:updateMiningData', src, {
             xpGained = totalXP,
@@ -841,14 +891,17 @@ RegisterNetEvent('resource:completeSmelting', function(itemName, amount, output,
             newTotalMined = currentTotalMined,
             newTotalSmelted = currentTotalSmelted,
             newLevel = currentLevel,
-            newXP = currentXP
+            newXP = currentXP,
+            xpForNextLevel = xpForNextLevel,
+            xpProgress = xpProgress
         })
         
         print('^2[SUCCESS]^0 Smelting completed - Total XP:', totalXP, 'Level:', currentLevel, 'TotalSmelted:', currentTotalSmelted .. '^0')
     else
-        -- Refund input items if inventory is full
+        -- Refund input items if inventory is full (ore was already removed when smelting started)
         exports['ox_inventory']:AddItem(src, itemName, amount)
-        TriggerClientEvent('QBCore:Notify', src, 'Your inventory is full! Items refunded.', 'error')
+        TriggerClientEvent('QBCore:Notify', src, 'Your inventory is full! ' .. amount .. 'x ' .. itemName .. ' refunded.', 'error')
+        print('^1[ERROR]^0 Smelting failed - inventory full, refunded ' .. amount .. 'x ' .. itemName .. ' to player ' .. src .. '^0')
     end
 end)
 

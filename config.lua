@@ -391,12 +391,12 @@ Config.RecyclingCenter = {
         copper_ore = {
             item = 'copper',
             label = 'Copper',
-            ratio = 0.5
+            ratio = 1
         },
         iron_ore = {
             item = 'iron',
             label = 'Iron',
-            ratio = 0.5
+            ratio = 1
         },
         gold_ore = {
             item = 'gold',

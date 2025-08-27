@@ -232,12 +232,8 @@ class ResourceGatheringUI {
                 // Update XP text with server values
                 const currentXPElement = document.getElementById('currentXP');
                 if (currentXPElement) {
-                    // Calculate XP in current level using server values
-                    // We need to calculate how much XP the player has in the current level
-                    // This is the difference between current XP and the XP required for the current level
-                    const currentLevelXP = this.getLevelXP(currentLevel);
-                    const xpInCurrentLevel = currentXP - currentLevelXP;
-                    currentXPElement.textContent = Math.max(0, xpInCurrentLevel);
+                    // Show current total XP
+                    currentXPElement.textContent = currentXP;
                 }
                 
                 const nextLevelXPElement = document.getElementById('nextLevelXP');
@@ -272,7 +268,8 @@ class ResourceGatheringUI {
                 // Update XP text with fallback values
                 const currentXPElement = document.getElementById('currentXP');
                 if (currentXPElement) {
-                    currentXPElement.textContent = Math.max(0, xpInCurrentLevel);
+                    // Show current total XP
+                    currentXPElement.textContent = currentXP;
                 }
                 
                 const nextLevelXPElement = document.getElementById('nextLevelXP');
@@ -289,8 +286,30 @@ class ResourceGatheringUI {
     }
 
     getLevelXP(level) {
-        // Simple XP calculation: each level requires level * 100 XP
-        return level * 100;
+        // Use server-provided XP values from config instead of hardcoded calculation
+        // The server sends xpForNextLevel which contains the XP requirement for the next level
+        if (this.playerData && this.playerData.xpForNextLevel !== undefined) {
+            // For current level, we need to calculate backwards from next level
+            if (level === this.playerData.level) {
+                // Current level XP requirement
+                return this.playerData.xp - (this.playerData.xpForNextLevel - this.playerData.xp);
+            } else if (level === this.playerData.level + 1) {
+                // Next level XP requirement
+                return this.playerData.xpForNextLevel;
+            }
+        }
+        
+        // Fallback to config-based calculation if server data not available
+        // This matches your config.XPSystem.levelRequirements structure
+        const levelRequirements = {
+            1: 0, 2: 100, 3: 250, 4: 450, 5: 700, 6: 1000, 7: 1350, 8: 1750, 9: 2200, 10: 2700,
+            11: 3250, 12: 3850, 13: 4500, 14: 5200, 15: 5950, 16: 6750, 17: 7600, 18: 8500, 19: 9450, 20: 10450,
+            21: 11500, 22: 12600, 23: 13750, 24: 14950, 25: 16200, 26: 17500, 27: 18850, 28: 20250, 29: 21700, 30: 23200,
+            31: 24750, 32: 26350, 33: 28000, 34: 29700, 35: 31450, 36: 33250, 37: 35100, 38: 37000, 39: 38950, 40: 40950,
+            41: 43000, 42: 45100, 43: 47250, 44: 49450, 45: 51700, 46: 54000, 47: 56350, 48: 58750, 49: 61200, 50: 63700, 51: 66250
+        };
+        
+        return levelRequirements[level] || (level * 100); // Fallback to simple calculation
     }
 
 

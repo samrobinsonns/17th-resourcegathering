@@ -1574,13 +1574,25 @@ local function CloseResourceGatheringUI()
     })
 end
 
--- Command to open the UI
-RegisterCommand('resourcegathering', function()
-    OpenResourceGatheringUI()
-end, false)
+-- Command completely removed to prevent F6 from working
+-- RegisterCommand('resourcegathering', function()
+--     OpenResourceGatheringUI()
+-- end, false)
 
--- Key binding (F6 by default)
-RegisterKeyMapping('resourcegathering', 'Open Resource Gathering UI', 'keyboard', 'F6')
+-- Key binding completely removed - F6 no longer opens the UI
+-- RegisterKeyMapping('resourcegathering', 'Open Resource Gathering UI', 'keyboard', 'F6')
+
+-- No key mapping registered - F6 will not work
+
+-- Explicitly override any existing F6 binding to prevent it from working
+RegisterKeyMapping('resourcegathering', 'Open Resource Gathering UI', 'keyboard', '')
+
+-- Additional safety: Try to clear any cached F6 binding
+Citizen.CreateThread(function()
+    Wait(1000) -- Wait for resource to fully load
+    -- Force clear any existing key binding
+    TriggerEvent('chat:addSuggestion', '/resourcegathering', 'This command has been disabled')
+end)
 
 -- NUI Callbacks
 RegisterNUICallback('closeUI', function(data, cb)
